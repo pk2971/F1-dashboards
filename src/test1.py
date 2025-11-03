@@ -43,7 +43,7 @@ try:
         st.subheader("Tyre Strategies")
         
         # --- Drivers selectbox ---
-        selected_drivers = st.multiselect("Choose Driver:", drivers, default=drivers[:3] if len(drivers) >= 3 else drivers)
+        selected_drivers = st.multiselect("Choose Driver:", drivers, default=drivers)
         
         if not selected_drivers:
             st.warning("Please select at least one driver")
