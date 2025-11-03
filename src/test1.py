@@ -39,11 +39,11 @@ try:
 
     # --- TAB 1: Tyre Stints ---
     with tab1:
-        
+
         st.subheader("Tyre Strategies")
         
         # --- Drivers selectbox ---
-        selected_driver = st.selectbox("Choose Driver:", drivers)
+        selected_driver = st.multiselect("Choose Driver:", drivers , default=drivers)
         
         # --- Laps slider ---
         min_lap = int(laps['LapNumber'].min())
