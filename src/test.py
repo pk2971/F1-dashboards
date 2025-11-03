@@ -1,51 +1,68 @@
+import streamlit as st
 from matplotlib import pyplot as plt
-
 import fastf1
 import fastf1.plotting
-session = fastf1.get_session(2022, "Hungary", 'R')
-session.load()
-laps = session.laps
-drivers = session.drivers
-print(drivers)
-drivers = [session.get_driver(driver)["Abbreviation"] for driver in drivers]
-print(drivers)
-stints = laps[["Driver", "Stint", "Compound", "LapNumber"]]
-stints = stints.groupby(["Driver", "Stint", "Compound"])
-stints = stints.count().reset_index()
-stints = stints.rename(columns={"LapNumber": "StintLength"})
-print(stints)
+import pandas as pd
 
-fig, ax = plt.subplots(figsize=(5, 10))
+st.set_page_config(page_title="F1 Tyre Strategies", layout="centered")
 
-for driver in drivers:
-    driver_stints = stints.loc[stints["Driver"] == driver]
+st.title("🏎️ F1 Tyre Strategy Visualization")
+st.markdown("Visualize driver stint strategies for any F1 race using [FastF1](https://theoehrly.github.io/Fast-F1/).")
 
-    previous_stint_end = 0
-    for idx, row in driver_stints.iterrows():
-        # each row contains the compound name and stint length
-        # we can use these information to draw horizontal bars
-        compound_color = fastf1.plotting.get_compound_color(row["Compound"],
-                                                            session=session)
-        plt.barh(
-            y=driver,
-            width=row["StintLength"],
-            left=previous_stint_end,
-            color=compound_color,
-            edgecolor="black",
-            fill=True
-        )
+# --- Sidebar filters ---
+year = st.sidebar.selectbox("Select Year", list(range(2018, 2025))[::-1], index=2)
+event = st.sidebar.text_input("Enter Grand Prix name (e.g. Hungary, Monaco, Japan)", "Hungary")
+session_type = st.sidebar.selectbox("Session Type", ["R", "Q", "FP1", "FP2", "FP3"], index=0)
 
-        previous_stint_end += row["StintLength"]
+st.sidebar.markdown("💡 Example: *2022, Hungary, Race (R)*")
 
-plt.title("2022 Hungarian Grand Prix Strategies")
-plt.xlabel("Lap Number")
-plt.grid(False)
-# invert the y-axis so drivers that finish higher are closer to the top
-ax.invert_yaxis()
+# Cache the session load (to avoid reloading every time)
+@st.cache_data(show_spinner=True)
+def load_session(year, event, session_type):
+    session = fastf1.get_session(year, event, session_type)
+    session.load()
+    return session
 
-ax.spines['top'].set_visible(False)
-ax.spines['right'].set_visible(False)
-ax.spines['left'].set_visible(False)
+# --- Load Data ---
+try:
+    session = load_session(year, event, session_type)
+    laps = session.laps
+    drivers = session.drivers
+    drivers = [session.get_driver(driver)["Abbreviation"] for driver in drivers]
 
-plt.tight_layout()
-plt.show()
+    st.success(f"Loaded {year} {event} GP {session_type} session successfully ✅")
+
+    # --- Prepare stint data ---
+    stints = laps[["Driver", "Stint", "Compound", "LapNumber"]]
+    stints = stints.groupby(["Driver", "Stint", "Compound"]).count().reset_index()
+    stints = stints.rename(columns={"LapNumber": "StintLength"})
+
+    # --- Plot ---
+    fig, ax = plt.subplots(figsize=(6, 10))
+    for driver in drivers:
+        driver_stints = stints.loc[stints["Driver"] == driver]
+        previous_stint_end = 0
+        for _, row in driver_stints.iterrows():
+            compound_color = fastf1.plotting.get_compound_color(row["Compound"], session=session)
+            ax.barh(
+                y=driver,
+                width=row["StintLength"],
+                left=previous_stint_end,
+                color=compound_color,
+                edgecolor="black"
+            )
+            previous_stint_end += row["StintLength"]
+
+    ax.set_title(f"{year} {event} Grand Prix Strategies")
+    ax.set_xlabel("Lap Number")
+    ax.invert_yaxis()
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.grid(False)
+
+    st.pyplot(fig)
+
+except Exception as e:
+    st.error(f"⚠️ Could not load session: {e}")
+    st.stop()
