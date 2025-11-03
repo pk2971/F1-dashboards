@@ -25,7 +25,7 @@ session_type = st.sidebar.selectbox("Session Type", ["R", "Q", "FP1", "FP2", "FP
 @st.cache_data(show_spinner=True)
 def load_session(year, event, session_type):
     session = fastf1.get_session(year, event, session_type)
-    session.load(telemetry=False, weather=False)
+    session.load(telemetry=False, weather=True)
     return session
 
 try:
