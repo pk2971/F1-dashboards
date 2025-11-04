@@ -1,88 +1,53 @@
-import pandas as pd
-from matplotlib import pyplot as plt
-from matplotlib.patches import Patch
 import fastf1
-import fastf1.plotting
+import matplotlib.pyplot as plt
 
-# Load session data
-session = fastf1.get_session(2025, "Silverstone", 'R')
-session.load(weather=True)
-laps = session.laps
+# Load the session with messages and laps
+session = fastf1.get_session(2024, "Brazil", 'R')
+session.load(telemetry=True, weather=True, messages=True, laps=True)
 
-# Get drivers
-drivers = session.drivers
-drivers = [session.get_driver(driver)["Abbreviation"] for driver in drivers]
+# Pick lap 10 specifically and find the fastest driver in that lap
+lap_number = 10
+lap_10_laps = session.laps[session.laps['LapNumber'] == lap_number]
 
-# Prepare weather data
-weather_data = session.laps.get_weather_data()
-laps_reset = laps.reset_index(drop=True)
-weather_reset = weather_data.reset_index(drop=True)
-joined = pd.concat([laps_reset, weather_reset.loc[:, ~(weather_reset.columns == 'Time')]], axis=1)
+# Get the fastest lap from lap 10
+fastest_lap_10 = lap_10_laps.pick_fastest()
 
-# Prepare stint data
-stints = laps[["Driver", "Stint", "Compound", "LapNumber"]]
-stints = stints.groupby(["Driver", "Stint", "Compound"])
-stints = stints.count().reset_index()
-stints = stints.rename(columns={"LapNumber": "StintLength"})
+# Get the telemetry data for the fastest lap
+telemetry = fastest_lap_10.get_telemetry() 
 
-# Create figure
-fig, ax = plt.subplots(figsize=(15, 10))
+# Create a figure with 3 subplots
+fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 10))
+fig.suptitle(f'Lap {lap_number} - Fastest: {fastest_lap_10["Driver"]} - {fastest_lap_10["LapTime"]}', 
+             fontsize=16, fontweight='bold')
 
-# Draw tire strategy bars for each driver
-for driver in drivers:
-    driver_stints = stints.loc[stints["Driver"] == driver]
-    
-    previous_stint_end = 0
-    for idx, row in driver_stints.iterrows():
-        compound_color = fastf1.plotting.get_compound_color(row["Compound"], session=session)
-        plt.barh(
-            y=driver,
-            width=row["StintLength"],
-            left=previous_stint_end,
-            color=compound_color,
-            edgecolor="black",
-            fill=True
-        )
-        previous_stint_end += row["StintLength"]
+# Plot 1: Speed vs Distance
+ax1.plot(telemetry['Distance'], telemetry['Speed'], color='purple', linewidth=2)
+ax1.set_ylabel('Speed (km/h)', fontsize=12)
+ax1.set_xlabel('Distance (m)', fontsize=12)
+ax1.set_title('Speed vs Distance', fontsize=14)
+ax1.grid(True, alpha=0.3)
 
-# Add rain overlay
-for i, row in joined.iterrows():
-    if row['Rainfall']:
-        ax.axvspan(row['LapNumber'] - 0.5, row['LapNumber'] + 0.5,
-                   color='skyblue', alpha=0.3, zorder=0)
+# Plot 2: Throttle vs Distance
+ax2.plot(telemetry['Distance'], telemetry['Throttle'], color='green', linewidth=2)
+ax2.set_ylabel('Throttle (%)', fontsize=12)
+ax2.set_xlabel('Distance (m)', fontsize=12)
+ax2.set_title('Throttle vs Distance', fontsize=14)
+ax2.grid(True, alpha=0.3)
+ax2.set_ylim(0, 105)
 
-# Configure axes
-plt.title("2025 Silverstone Grand Prix - Tire Strategies with Rain", fontsize=14, weight='bold')
-plt.xlabel("Lap Number", fontsize=12)
-plt.ylabel("Driver", fontsize=12)
-
-# Set x-axis to show every lap
-max_lap = int(joined['LapNumber'].max())
-ax.set_xlim(0, max_lap + 1)
-ax.set_xticks(range(1, max_lap + 1))  # Show every lap from 1 to max
-ax.grid(axis='x', linestyle='-', alpha=0.3)
-
-# Invert y-axis
-ax.invert_yaxis()
-
-# Remove unnecessary spines
-ax.spines['top'].set_visible(False)
-ax.spines['right'].set_visible(False)
-ax.spines['left'].set_visible(False)
-
-# Create legend
-# Get unique compounds used in the race
-compounds_used = stints['Compound'].unique()
-compound_patches = [Patch(facecolor=fastf1.plotting.get_compound_color(compound, session=session),
-                          edgecolor='black', label=compound) 
-                   for compound in compounds_used]
-
-# Add rain to legend
-rain_patch = Patch(facecolor='skyblue', alpha=0.3, label='Rain')
-
-# Combine all legend elements
-legend_elements = compound_patches + [rain_patch]
-ax.legend(handles=legend_elements, loc='lower right', title='Tire Compounds & Conditions')
+# Plot 3: Brake vs Distance
+ax3.plot(telemetry['Distance'], telemetry['Brake'], color='red', linewidth=2)
+ax3.set_ylabel('Brake Pressure', fontsize=12)
+ax3.set_xlabel('Distance (m)', fontsize=12)
+ax3.set_title('Brake vs Distance', fontsize=14)
+ax3.grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.show()
+
+# Print info about the fastest lap
+print(f"Lap Number: {lap_number}")
+print(f"Fastest Driver: {fastest_lap_10['Driver']}")
+print(f"Team: {fastest_lap_10['Team']}")
+print(f"Lap Time: {fastest_lap_10['LapTime']}")
+print(f"Max Speed: {telemetry['Speed'].max():.2f} km/h")
