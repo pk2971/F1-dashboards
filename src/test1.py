@@ -154,6 +154,7 @@ try:
 
     with tab2:
         st.subheader("Lap Time Analysis")
+        fastf1.plotting.setup_mpl(mpl_timedelta_support=True, color_scheme='fastf1')
         selected_drivers = st.multiselect("Choose Driver:", drivers, default=drivers)
         fig, ax = plt.subplots(figsize=(8, 5))
         for driver in selected_drivers:
