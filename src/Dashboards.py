@@ -52,7 +52,7 @@ try:
         if not selected_drivers:
             st.warning("Please select at least one driver")
         else:
-            fig, ax = plt.subplots(figsize=(40.0, 20))
+            fig, ax = plt.subplots(figsize=(20.0, 11))
             
             # Add colored background spans for flags/safety car 
             flag_legend_added = {'red': False, 'yellow': False, 'orange': False}
@@ -160,7 +160,7 @@ try:
                 stints = driver_laps.groupby(["Driver", "Stint", "Compound"]).size().reset_index(name='StintLength')
                 
                 # Plot
-                fig1, ax1 = plt.subplots(figsize=(25, max(4, len(selected_drivers) * 0.6)))
+                fig1, ax1 = plt.subplots(figsize=(15, max(4, len(selected_drivers) * 0.6)))
                 
                 for driver in selected_drivers:
                     driver_stints = stints[stints["Driver"] == driver].sort_values("Stint")
@@ -234,7 +234,7 @@ try:
         if not selected_drivers:
             st.warning("Please select at least one driver")
         else:
-            fig, ax = plt.subplots(figsize=(20, 10))
+            fig, ax = plt.subplots(figsize=(12, 6))
             
             for driver in selected_drivers:
                 driver_laps = session.laps.pick_drivers(driver).pick_quicklaps().reset_index()
