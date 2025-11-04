@@ -161,7 +161,10 @@ try:
             style = plotting.get_driver_style(identifier=driver,
                                       style=['color', 'linestyle'],
                                       session=session)
-        ax.plot(laps['LapTime'], **style, label=driver)
+            ax.plot(laps['LapTime'], **style, label=driver)
+        ax.set_xlabel("Lap Number")
+        ax.set_ylabel("Lap Time")
+        ax.legend()
         
 
 except Exception as e:
