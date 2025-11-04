@@ -53,7 +53,7 @@ try:
         if not selected_drivers:
             st.warning("Please select at least one driver")
         else:
-            fig, ax = plt.subplots(figsize=(10.0, 6.9))
+            fig, ax = plt.subplots(figsize=(20.0, 11))
             
             # Add colored background spans for flags/safety car FIRST (so they're behind the lines)
             flag_legend_added = {'red': False, 'yellow': False, 'orange': False}
@@ -113,23 +113,6 @@ try:
             plt.tight_layout()
             st.pyplot(fig)
             
-            # Show track status info below the chart
-            st.subheader("Track Status Events")
-            track_events = []
-            for lap_num in session.laps['LapNumber'].unique():
-                lap_data = session.laps[session.laps['LapNumber'] == lap_num].iloc[0]
-                if 'TrackStatus' in lap_data and pd.notna(lap_data['TrackStatus']):
-                    track_status = lap_data['TrackStatus']
-                    if str(track_status) != '1':  # 1 = green flag (normal)
-                        track_events.append({
-                            'Lap': lap_num,
-                            'Status': track_status
-                        })
-            
-            if track_events:
-                st.dataframe(pd.DataFrame(track_events))
-            else:
-                st.info("No safety car or flag incidents during this session")
     # --- TAB 1: Tyre Stints ---
     with tab2:
         st.subheader("Tyre Strategies")
