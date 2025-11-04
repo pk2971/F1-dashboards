@@ -87,6 +87,8 @@ try:
             for drv in selected_drivers:
                 drv_laps = session.laps.pick_drivers(drv)
                 abb = drv_laps['Driver'].iloc[0]
+                if len(drv_laps) == 0:
+                    continue  # Skip drivers with no lap data
                 style = fastf1.plotting.get_driver_style(identifier=abb,
                                                         style=['color', 'linestyle'],
                                                         session=session)
