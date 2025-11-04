@@ -1,53 +1,77 @@
 import fastf1
 import matplotlib.pyplot as plt
+import pandas as pd
 
-# Load the session with messages and laps
-session = fastf1.get_session(2024, "Brazil", 'R')
-session.load(telemetry=True, weather=True, messages=True, laps=True)
+# Load session
+race = fastf1.get_session(2024, "Australia", 'R')
+race.load()
 
-# Pick lap 10 specifically and find the fastest driver in that lap
-lap_number = 10
-lap_10_laps = session.laps[session.laps['LapNumber'] == lap_number]
+# Collect track status data for each lap
+track_status_data = []
+for lap_num in sorted(race.laps['LapNumber'].unique()):
+    lap_data = race.laps[race.laps['LapNumber'] == lap_num].iloc[0]
+    if 'TrackStatus' in lap_data and pd.notna(lap_data['TrackStatus']):
+        track_status_data.append({
+            'LapNumber': lap_num,
+            'TrackStatus': str(lap_data['TrackStatus'])
+        })
 
-# Get the fastest lap from lap 10
-fastest_lap_10 = lap_10_laps.pick_fastest()
-
-# Get the telemetry data for the fastest lap
-telemetry = fastest_lap_10.get_telemetry() 
-
-# Create a figure with 3 subplots
-fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 10))
-fig.suptitle(f'Lap {lap_number} - Fastest: {fastest_lap_10["Driver"]} - {fastest_lap_10["LapTime"]}', 
-             fontsize=16, fontweight='bold')
-
-# Plot 1: Speed vs Distance
-ax1.plot(telemetry['Distance'], telemetry['Speed'], color='purple', linewidth=2)
-ax1.set_ylabel('Speed (km/h)', fontsize=12)
-ax1.set_xlabel('Distance (m)', fontsize=12)
-ax1.set_title('Speed vs Distance', fontsize=14)
-ax1.grid(True, alpha=0.3)
-
-# Plot 2: Throttle vs Distance
-ax2.plot(telemetry['Distance'], telemetry['Throttle'], color='green', linewidth=2)
-ax2.set_ylabel('Throttle (%)', fontsize=12)
-ax2.set_xlabel('Distance (m)', fontsize=12)
-ax2.set_title('Throttle vs Distance', fontsize=14)
-ax2.grid(True, alpha=0.3)
-ax2.set_ylim(0, 105)
-
-# Plot 3: Brake vs Distance
-ax3.plot(telemetry['Distance'], telemetry['Brake'], color='red', linewidth=2)
-ax3.set_ylabel('Brake Pressure', fontsize=12)
-ax3.set_xlabel('Distance (m)', fontsize=12)
-ax3.set_title('Brake vs Distance', fontsize=14)
-ax3.grid(True, alpha=0.3)
-
-plt.tight_layout()
-plt.show()
-
-# Print info about the fastest lap
-print(f"Lap Number: {lap_number}")
-print(f"Fastest Driver: {fastest_lap_10['Driver']}")
-print(f"Team: {fastest_lap_10['Team']}")
-print(f"Lap Time: {fastest_lap_10['LapTime']}")
-print(f"Max Speed: {telemetry['Speed'].max():.2f} km/h")
+if track_status_data:
+    df_status = pd.DataFrame(track_status_data)
+    print("Track Status Data:")
+    print(df_status)
+    
+    # Create figure
+    fig, ax = plt.subplots(figsize=(12, 4))
+    
+    # Define status types and colors
+    status_colors = {
+        '1': ('green', 'Green Flag'),
+        '2': ('yellow', 'Yellow Flag'),
+        '4': ('orange', 'Safety Car'),
+        '5': ('red', 'Red Flag'),
+        '6': ('purple', 'VSC'),
+        '7': ('lightblue', 'VSC Ending')
+    }
+    
+    # Plot each status type separately for legend
+    for status_code, (color, label) in status_colors.items():
+        status_laps = df_status[df_status['TrackStatus'] == status_code]
+        if not status_laps.empty:
+            ax.scatter(status_laps['LapNumber'], 
+                      [1] * len(status_laps),  # All at y=1 for visibility
+                      c=color, 
+                      s=100, 
+                      marker='o',
+                      label=label,
+                      alpha=0.8,
+                      edgecolors='black',
+                      linewidths=1.5)
+    
+    # Formatting
+    ax.set_xlabel('Lap Number', fontsize=12)
+    ax.set_ylabel('Track Status', fontsize=12)
+    ax.set_yticks([1])
+    ax.set_yticklabels(['Status'])
+    ax.set_ylim([0.5, 1.5])
+    
+    # Set x-axis to show all laps
+    max_lap = race.laps['LapNumber'].max()
+    ax.set_xlim([0, max_lap + 1])
+    ax.set_xticks(range(0, int(max_lap) + 1, 5))  # Every 5 laps
+    
+    ax.legend(loc='upper right', framealpha=0.9)
+    ax.grid(True, alpha=0.3, axis='x')
+    ax.set_title('Track Status by Lap', fontsize=14, fontweight='bold')
+    
+    plt.tight_layout()
+    plt.show()
+    
+    # Show summary
+    print("\nTrack Status Summary:")
+    status_summary = df_status['TrackStatus'].value_counts()
+    for status, count in status_summary.items():
+        status_name = status_colors.get(status, (None, 'Unknown'))[1]
+        print(f"{status_name} (Code {status}): {count} laps")
+else:
+    print("No track status data available for this session")

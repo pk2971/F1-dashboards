@@ -53,7 +53,7 @@ try:
         if not selected_drivers:
             st.warning("Please select at least one driver")
         else:
-            fig, ax = plt.subplots(figsize=(15.0, 10))
+            fig, ax = plt.subplots(figsize=(10.0, 6.9))
             
             for drv in selected_drivers:
                 drv_laps = session.laps.pick_drivers(drv)
@@ -66,14 +66,34 @@ try:
                 ax.plot(drv_laps['LapNumber'], drv_laps['Position'],
                         label=abb, **style)
             
+            # Add vertical lines for flags/safety car
+            for lap_num in session.laps['LapNumber'].unique():
+                lap_data = session.laps[session.laps['LapNumber'] == lap_num].iloc[0]
+                
+                # Check for flags
+                if 'TrackStatus' in lap_data and pd.notna(lap_data['TrackStatus']):
+                    track_status = lap_data['TrackStatus']
+                    
+                    # Red flag
+                    if '5' in str(track_status) or 'Red' in str(track_status):
+                        ax.axvline(x=lap_num, color='red', linestyle='--', alpha=0.7, linewidth=2)
+                    
+                    # Yellow flag / Safety Car
+                    elif '4' in str(track_status) or 'Yellow' in str(track_status):
+                        ax.axvline(x=lap_num, color='yellow', linestyle='--', alpha=0.7, linewidth=2)
+                    
+                    # Virtual Safety Car
+                    elif '6' in str(track_status) or 'VSC' in str(track_status):
+                        ax.axvline(x=lap_num, color='orange', linestyle='--', alpha=0.7, linewidth=2)
+            
             # Set y-axis (positions) to show all whole numbers
             num_drivers = len(session.drivers)
             ax.set_ylim([num_drivers + 0.5, 0.5])
-            ax.set_yticks(range(1, num_drivers + 1))  # All positions as whole numbers
+            ax.set_yticks(range(1, num_drivers + 1))
             
             # Set x-axis (laps) to show all whole numbers
             max_lap = session.laps['LapNumber'].max()
-            ax.set_xticks(range(1, int(max_lap) + 1))  # All laps as whole numbers
+            ax.set_xticks(range(1, int(max_lap) + 1))
             
             ax.set_xlabel('Lap')
             ax.set_ylabel('Position')
@@ -81,6 +101,24 @@ try:
             plt.tight_layout()
             
             st.pyplot(fig)
+            
+            # Show track status info below the chart
+            st.subheader("Track Status Events")
+            track_events = []
+            for lap_num in session.laps['LapNumber'].unique():
+                lap_data = session.laps[session.laps['LapNumber'] == lap_num].iloc[0]
+                if 'TrackStatus' in lap_data and pd.notna(lap_data['TrackStatus']):
+                    track_status = lap_data['TrackStatus']
+                    if str(track_status) != '1':  # 1 = green flag (normal)
+                        track_events.append({
+                            'Lap': lap_num,
+                            'Status': track_status
+                        })
+            
+            if track_events:
+                st.dataframe(pd.DataFrame(track_events))
+            else:
+                st.info("No safety car or flag incidents during this session")
     # --- TAB 1: Tyre Stints ---
     with tab2:
         st.subheader("Tyre Strategies")
