@@ -154,8 +154,28 @@ try:
         st.subheader("Fastest Lap Telemetry Comparision")
         max_lap_number = session.laps['LapNumber'].max()
         lap_numbers = session.laps['LapNumber'].tolist()
+        # Pick lap 
         lap_picker = st.selectbox('Select Lap number',session.laps['LapNumber'].tolist() , index = lap_numbers.index(max_lap_number))
-        st.info("Coming soon...")
+        driver_picker = st.selectbox("Choose Driver:", drivers, default=drivers)
+        # Load seesion data for picked lap
+        lap_session_data = session.laps[session.laps['LapNumber'] == lap_picker]
+        # Fastest from lap 'n' and its telemetry
+        fastest_lap = lap_session_data.pick_fastest()
+        telemetry_fastest_lap = fastest_lap.get_telemetry()
+
+        # Plot fastest in Lap
+        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 10)) 
+        fig.suptitle(f'Lap {lap_picker} - Fastest: {fastest_lap["Driver"]} - {fastest_lap["LapTime"]}', fontsize=16, fontweight='bold')
+
+        # Plot 1: Speed vs Distance
+        ax1.plot(telemetry_fastest_lap['Distance'], telemetry_fastest_lap['Speed'], color='purple', linewidth=2)
+        ax1.set_ylabel('Speed (km/h)', fontsize=12)
+        ax1.set_xlabel('Distance (m)', fontsize=12)
+        ax1.set_title('Speed vs Distance', fontsize=14)
+        ax1.grid(True, alpha=0.3)
+
+
+
 
 except Exception as e:
     st.error(f"⚠️ Could not load session: {e}")
