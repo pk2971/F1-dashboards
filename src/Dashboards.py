@@ -1,28 +1,27 @@
-import streamlit as st
 import fastf1
-import fastf1.plotting
-import matplotlib.pyplot as plt
 import pandas as pd
+import fastf1.plotting
+import streamlit as st
+import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
-from fastf1 import plotting
 
 
 
 st.set_page_config(page_title="F1 Dashboard", layout="wide")
 
-st.title("🏎️ F1 Race Dashboard")
+st.title("🏎️💨 F1 Race Dashboard")
 
 # --- Sidebar controls ---
-year = st.sidebar.selectbox("Select Year", list(range(2018, 2026))[::-1], index=1)
-races_2025 = [
+year = st.sidebar.selectbox("Select Year", list(range(2020, 2026))[::-1], index=1)
+races= [
     "Bahrain", "Saudi Arabia", "Australia", "Azerbaijan", "Miami",
     "Emilia Romagna", "Monaco", "Spain", "Canada", "Austria",
     "Britain", "Hungary", "Belgium", "Netherlands", "Italy",
     "Singapore", "Japan", "Qatar", "USA", "Mexico",
     "Brazil", "Las Vegas", "Abu Dhabi"
 ]
-event = st.sidebar.selectbox("Select Grand Prix", options=races_2025, index=races_2025.index("Australia"))
-session_type = st.sidebar.selectbox("Session Type", ["R", "Q", "FP1", "FP2", "FP3"], index=0)
+event = st.sidebar.selectbox("Select Grand Prix", options=races, index=races.index("Australia"))
+session_type = st.sidebar.selectbox("Session Type", ["R", "Q"], index=0)
 
 @st.cache_data(show_spinner=True)
 def load_session(year, event, session_type):
@@ -36,13 +35,13 @@ try:
     drivers = session.drivers
     drivers = [session.get_driver(drv)["Abbreviation"] for drv in drivers]
 
-    st.success(f"Loaded {year} {event} GP {session_type} successfully ✅")
+    st.success(f"Loaded {year} {event} GP {session_type} successfully")
 
     # --- Tabs ---
     tab1, tab2, tab3 = st.tabs(["Race Positions", "📊 Tyre Strategies",  "📈 Lap Time"])
-
+    # -- TAB 1: Race Positions --
     with tab1:
-        st.subheader("Race Positions")
+        st.subheader("Race Positions and Track Status")
         selected_drivers = st.multiselect(
             "Choose Driver:", 
             drivers, 
@@ -55,7 +54,7 @@ try:
         else:
             fig, ax = plt.subplots(figsize=(20.0, 11))
             
-            # Add colored background spans for flags/safety car FIRST (so they're behind the lines)
+            # Add colored background spans for flags/safety car 
             flag_legend_added = {'red': False, 'yellow': False, 'orange': False}
             
             for lap_num in session.laps['LapNumber'].unique():
@@ -83,11 +82,12 @@ try:
                         ax.axvspan(lap_num - 0.5, lap_num + 0.5, color='orange', alpha=0.2, label=label)
                         flag_legend_added['orange'] = True
             
-            # Now plot driver positions on top
+            # Plot driver positions 
             for drv in selected_drivers:
                 drv_laps = session.laps.pick_drivers(drv)
+                 # Skipping drivers with no lap data
                 if len(drv_laps) == 0:
-                    continue  # Skip drivers with no lap data
+                    continue 
                 abb = drv_laps['Driver'].iloc[0]
                 style = fastf1.plotting.get_driver_style(identifier=abb,
                                                         style=['color', 'linestyle'],
@@ -95,12 +95,12 @@ try:
                 ax.plot(drv_laps['LapNumber'], drv_laps['Position'],
                         label=abb, **style)
             
-            # Set y-axis (positions) to show all whole numbers
+            # y-axis (positions) 
             num_drivers = len(session.drivers)
             ax.set_ylim([num_drivers + 0.5, 0.5])
             ax.set_yticks(range(1, num_drivers + 1))
             
-            # Set x-axis (laps) to show all whole numbers
+            # x-axis (laps) 
             max_lap = session.laps['LapNumber'].max()
             ax.set_xticks(range(1, int(max_lap) + 1))
             
@@ -109,13 +109,13 @@ try:
             ax.set_title('Race Position Changes', fontsize=14)
             ax.grid(True, alpha=0.3)
             
-            # Create legend with both drivers and track status
+            # Legend with drivers and track status
             ax.legend(bbox_to_anchor=(1.0, 1.02), loc='upper left', framealpha=0.9)
             
             plt.tight_layout()
             st.pyplot(fig)
             
-    # --- TAB 1: Tyre Stints ---
+    # --- TAB 2: Tyre Stints ---
     with tab2:
         st.subheader("Tyre Strategies")
         
@@ -206,13 +206,13 @@ try:
                 ax1.spines['right'].set_visible(False)
                 ax1.spines['left'].set_visible(False)
                 
-                # Create legend
+                # Legend
                 compounds_used = stints['Compound'].unique()
                 compound_patches = [Patch(facecolor=fastf1.plotting.get_compound_color(compound, session=session),
                                         edgecolor='black', label=compound) 
                                 for compound in compounds_used]
                 
-                # Add rain to legend if there was any rainfall
+                # Adding rain to legend if there was any rainfall
                 if joined_filtered['Rainfall'].any():
                     rain_patch = Patch(facecolor='skyblue', alpha=0.3, label='Rain')
                     legend_elements = compound_patches + [rain_patch]
@@ -224,7 +224,7 @@ try:
                 plt.tight_layout()
                 st.pyplot(fig1)
 
-
+    # -- TAB 3: Lap Time Analysis
     with tab3:
         st.subheader("Lap Time Analysis")
         fastf1.plotting.setup_mpl(mpl_timedelta_support=True, color_scheme='fastf1')
