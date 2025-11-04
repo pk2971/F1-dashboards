@@ -43,29 +43,36 @@ try:
 
     with tab1:
         st.subheader("Race Positions")
-        selected_drivers = st.multiselect("Choose Driver:", drivers, default=drivers)
-        fig, ax = plt.subplots(figsize=(10.0, 6.9))
-        for drv in selected_drivers:
-            drv_laps = session.laps.pick_drivers(drv)
-
-            abb = drv_laps['Driver'].iloc[0]
-            style = fastf1.plotting.get_driver_style(identifier=abb,
-                                                    style=['color', 'linestyle'],
-                                                    session=session)
-
-            ax.plot(drv_laps['LapNumber'], drv_laps['Position'],
-                    label=abb, **style)
+        selected_drivers = st.multiselect(
+            "Choose Driver:", 
+            drivers, 
+            default=drivers,
+            key="race_positions"  # Add unique key
+        )
+        
+        if not selected_drivers:
+            st.warning("Please select at least one driver")
+        else:
+            fig, ax = plt.subplots(figsize=(10.0, 6.9))
             
-        ax.set_ylim([20.5, 0.5])
-        # ax.set_yticks([1, 5, 10, 15, 20])
-        ax.set_xlabel('Lap')
-        ax.set_ylabel('Position')
+            for drv in selected_drivers:
+                drv_laps = session.laps.pick_drivers(drv)
 
-        ax.legend(bbox_to_anchor=(1.0, 1.02))
-        plt.tight_layout()
+                abb = drv_laps['Driver'].iloc[0]
+                style = fastf1.plotting.get_driver_style(identifier=abb,
+                                                        style=['color', 'linestyle'],
+                                                        session=session)
 
-        plt.show()
-
+                ax.plot(drv_laps['LapNumber'], drv_laps['Position'],
+                        label=abb, **style)
+                
+            ax.set_ylim([20.5, 0.5])
+            ax.set_xlabel('Lap')
+            ax.set_ylabel('Position')
+            ax.legend(bbox_to_anchor=(1.0, 1.02))
+            plt.tight_layout()
+            
+            st.pyplot(fig)  # Use st.pyplot(fig) instead of plt.show()
 
 
     # --- TAB 1: Tyre Stints ---
@@ -73,7 +80,7 @@ try:
         st.subheader("Tyre Strategies")
         
         # --- Drivers selectbox ---
-        selected_drivers = st.multiselect("Choose Driver:", drivers, default=drivers)
+        selected_drivers = st.multiselect("Choose Driver:", drivers, default=drivers , key = "Tyre_stints")
         
         if not selected_drivers:
             st.warning("Please select at least one driver")
