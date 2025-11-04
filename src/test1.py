@@ -151,29 +151,58 @@ try:
 
 
     with tab2:
-        st.subheader("Fastest Lap Telemetry Comparision")
+        st.subheader("Fastest Lap Telemetry Comparison")
         max_lap_number = session.laps['LapNumber'].max()
         lap_numbers = session.laps['LapNumber'].tolist()
+        
         # Pick lap 
-        lap_picker = st.selectbox('Select Lap number',session.laps['LapNumber'].tolist() , index = lap_numbers.index(max_lap_number))
-        # driver_picker = st.selectbox("Choose Driver:", drivers, default=drivers)
-        # Load seesion data for picked lap
+        lap_picker = st.selectbox(
+            'Select Lap number',
+            session.laps['LapNumber'].tolist(), 
+            index=lap_numbers.index(max_lap_number)
+        )
+        
+        # Load session data for picked lap
         lap_session_data = session.laps[session.laps['LapNumber'] == lap_picker]
-        # Fastest from lap 'n' and its telemetry
-        fastest_lap = lap_session_data.pick_fastest()
-        telemetry_fastest_lap = fastest_lap.get_telemetry()
+        
+        # Check if we have valid lap data
+        if lap_session_data.empty:
+            st.warning(f"No data available for lap {lap_picker}")
+        else:
+            # Fastest from lap 'n' and its telemetry
+            fastest_lap = lap_session_data.pick_fastest()
+            
+            if fastest_lap is None or pd.isna(fastest_lap.get('LapTime')):
+                st.warning(f"No valid fastest lap found for lap {lap_picker}. Try selecting a different lap.")
+            else:
+                try:
+                    telemetry_fastest_lap = fastest_lap.get_telemetry()
+                    
+                    if telemetry_fastest_lap.empty:
+                        st.warning(f"No telemetry data available for lap {lap_picker}")
+                    else:
+                        # Plot fastest in Lap
+                        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 10)) 
+                        fig.suptitle(
+                            f'Lap {lap_picker} - Fastest: {fastest_lap["Driver"]} - {fastest_lap["LapTime"]}', 
+                            fontsize=16, 
+                            fontweight='bold'
+                        )
 
-        # Plot fastest in Lap
-        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 10)) 
-        fig.suptitle(f'Lap {lap_picker} - Fastest: {fastest_lap["Driver"]} - {fastest_lap["LapTime"]}', fontsize=16, fontweight='bold')
-
-        # Plot 1: Speed vs Distance
-        ax1.plot(telemetry_fastest_lap['Distance'], telemetry_fastest_lap['Speed'], color='purple', linewidth=2)
-        ax1.set_ylabel('Speed (km/h)', fontsize=12)
-        ax1.set_xlabel('Distance (m)', fontsize=12)
-        ax1.set_title('Speed vs Distance', fontsize=14)
-        ax1.grid(True, alpha=0.3)
-
+                        # Plot 1: Speed vs Distance
+                        ax1.plot(telemetry_fastest_lap['Distance'], telemetry_fastest_lap['Speed'], 
+                                color='purple', linewidth=2)
+                        ax1.set_ylabel('Speed (km/h)', fontsize=12)
+                        ax1.set_xlabel('Distance (m)', fontsize=12)
+                        ax1.set_title('Speed vs Distance', fontsize=14)
+                        ax1.grid(True, alpha=0.3)
+                        
+                        # Add your ax2 and ax3 plots here
+                        
+                        st.pyplot(fig)
+                        
+                except Exception as e:
+                    st.error(f"Error loading telemetry data: {str(e)}")
 
 
 
