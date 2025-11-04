@@ -53,7 +53,7 @@ try:
         if not selected_drivers:
             st.warning("Please select at least one driver")
         else:
-            fig, ax = plt.subplots(figsize=(10.0, 6.9))
+            fig, ax = plt.subplots(figsize=(15.0, 10))
             
             for drv in selected_drivers:
                 drv_laps = session.laps.pick_drivers(drv)
