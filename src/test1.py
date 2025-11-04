@@ -156,7 +156,7 @@ try:
         lap_numbers = session.laps['LapNumber'].tolist()
         # Pick lap 
         lap_picker = st.selectbox('Select Lap number',session.laps['LapNumber'].tolist() , index = lap_numbers.index(max_lap_number))
-        driver_picker = st.selectbox("Choose Driver:", drivers, default=drivers)
+        # driver_picker = st.selectbox("Choose Driver:", drivers, default=drivers)
         # Load seesion data for picked lap
         lap_session_data = session.laps[session.laps['LapNumber'] == lap_picker]
         # Fastest from lap 'n' and its telemetry
