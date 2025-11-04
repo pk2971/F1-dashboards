@@ -4,6 +4,8 @@ import fastf1.plotting
 import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.patches import Patch
+from fastf1 import plotting
+
 
 
 st.set_page_config(page_title="F1 Dashboard", layout="wide")
@@ -151,38 +153,16 @@ try:
 
 
     with tab2:
-        st.subheader("Fastest Lap Telemetry Comparison")
-        max_lap_number = session.laps['LapNumber'].max()
-        lap_numbers = session.laps['LapNumber'].tolist()
+        st.subheader("Lap Time Analysis")
+        selected_drivers = st.multiselect("Choose Driver:", drivers, default=drivers)
+        fig, ax = plt.subplots(figsize=(8, 5))
+        for driver in selected_drivers:
+            laps = session.laps.pick_drivers(driver).pick_quicklaps().reset_index()
+            style = plotting.get_driver_style(identifier=driver,
+                                      style=['color', 'linestyle'],
+                                      session=session)
+        ax.plot(laps['LapTime'], **style, label=driver)
         
-        # Pick lap 
-        lap_picker = st.selectbox(
-            'Select Lap number',
-            session.laps['LapNumber'].tolist(), 
-            index=lap_numbers.index(max_lap_number)
-        )
-        
-        # Load session data for picked lap
-        lap_session_data = session.laps[session.laps['LapNumber'] == lap_picker]
-        
-        # Get the fastest lap from the FILTERED data (lap 3, for example)
-        fastest_lap = lap_session_data.pick_fastest()
-        
-        # Get telemetry for this specific fastest lap
-        telemetry_fastest_lap = fastest_lap.get_telemetry()
-        
-        # Plot 1: Speed vs Distance
-        fig, ax1 = plt.subplots(figsize=(12, 6))
-        ax1.plot(telemetry_fastest_lap['Distance'], telemetry_fastest_lap['Speed'], 
-                color='purple', linewidth=2)
-        ax1.set_ylabel('Speed (km/h)', fontsize=12)
-        ax1.set_xlabel('Distance (m)', fontsize=12)
-        ax1.set_title(f'Speed vs Distance - Fastest Lap {lap_picker} ({fastest_lap["Driver"]})', fontsize=14)
-        ax1.grid(True, alpha=0.3)
-        
-        st.pyplot(fig)
-
-
 
 except Exception as e:
     st.error(f"⚠️ Could not load session: {e}")
