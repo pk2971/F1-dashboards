@@ -39,12 +39,38 @@ try:
     st.success(f"Loaded {year} {event} GP {session_type} successfully ✅")
 
     # --- Tabs ---
-    tab1, tab2 = st.tabs(["📊 Tyre Strategies", "📈 Lap Time"])
+    tab1, tab2, tab3 = st.tabs(["Race Positions", "📊 Tyre Strategies",  "📈 Lap Time"])
+
+    with tab1:
+        st.subheader("Race Positions")
+        selected_drivers = st.multiselect("Choose Driver:", drivers, default=drivers)
+        fig, ax = plt.subplots(figsize=(10.0, 6.9))
+        for drv in selected_drivers:
+            drv_laps = session.laps.pick_drivers(drv)
+
+            abb = drv_laps['Driver'].iloc[0]
+            style = fastf1.plotting.get_driver_style(identifier=abb,
+                                                    style=['color', 'linestyle'],
+                                                    session=session)
+
+            ax.plot(drv_laps['LapNumber'], drv_laps['Position'],
+                    label=abb, **style)
+            
+        ax.set_ylim([20.5, 0.5])
+        # ax.set_yticks([1, 5, 10, 15, 20])
+        ax.set_xlabel('Lap')
+        ax.set_ylabel('Position')
+
+        ax.legend(bbox_to_anchor=(1.0, 1.02))
+        plt.tight_layout()
+
+        plt.show()
+
+
 
     # --- TAB 1: Tyre Stints ---
-    with tab1:
+    with tab2:
         st.subheader("Tyre Strategies")
-        st.info("Coming soon...")
         
         # --- Drivers selectbox ---
         selected_drivers = st.multiselect("Choose Driver:", drivers, default=drivers)
@@ -152,7 +178,7 @@ try:
                 st.pyplot(fig1)
 
 
-    with tab2:
+    with tab3:
         st.subheader("Lap Time Analysis")
         fastf1.plotting.setup_mpl(mpl_timedelta_support=True, color_scheme='fastf1')
         
