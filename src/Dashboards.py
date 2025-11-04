@@ -38,7 +38,7 @@ try:
     st.success(f"Loaded {year} {event} GP {session_type} successfully")
 
     # --- Tabs ---
-    tab1, tab2, tab3 = st.tabs(["Race Positions", "📊 Tyre Strategies",  "📈 Lap Time"])
+    tab1, tab2, tab3 = st.tabs(["Race Positions", "Tyre Strategies",  "Lap Time"])
     # -- TAB 1: Race Positions --
     with tab1:
         st.subheader("Race Positions and Track Status")
