@@ -47,7 +47,7 @@ try:
             "Choose Driver:", 
             drivers, 
             default=drivers,
-            key="race_positions"  # Add unique key
+            key="race_positions"
         )
         
         if not selected_drivers:
@@ -65,16 +65,22 @@ try:
 
                 ax.plot(drv_laps['LapNumber'], drv_laps['Position'],
                         label=abb, **style)
-                
-            ax.set_ylim([20.5, 0.5])
+            
+            # Set y-axis (positions) to show all whole numbers
+            num_drivers = len(session.drivers)
+            ax.set_ylim([num_drivers + 0.5, 0.5])
+            ax.set_yticks(range(1, num_drivers + 1))  # All positions as whole numbers
+            
+            # Set x-axis (laps) to show all whole numbers
+            max_lap = session.laps['LapNumber'].max()
+            ax.set_xticks(range(1, int(max_lap) + 1))  # All laps as whole numbers
+            
             ax.set_xlabel('Lap')
             ax.set_ylabel('Position')
             ax.legend(bbox_to_anchor=(1.0, 1.02))
             plt.tight_layout()
             
-            st.pyplot(fig)  # Use st.pyplot(fig) instead of plt.show()
-
-
+            st.pyplot(fig)
     # --- TAB 1: Tyre Stints ---
     with tab2:
         st.subheader("Tyre Strategies")
