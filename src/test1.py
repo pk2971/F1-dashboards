@@ -27,7 +27,7 @@ session_type = st.sidebar.selectbox("Session Type", ["R", "Q", "FP1", "FP2", "FP
 @st.cache_data(show_spinner=True)
 def load_session(year, event, session_type):
     session = fastf1.get_session(year, event, session_type)
-    session.load(telemetry=True, weather=True)
+    session.load(telemetry=False, weather=True)
     return session
 
 try:
@@ -155,17 +155,34 @@ try:
     with tab2:
         st.subheader("Lap Time Analysis")
         fastf1.plotting.setup_mpl(mpl_timedelta_support=True, color_scheme='fastf1')
-        selected_drivers = st.multiselect("Choose Driver:", drivers, default=drivers)
-        fig, ax = plt.subplots(figsize=(8, 5))
-        for driver in selected_drivers:
-            laps = session.laps.pick_drivers(driver).pick_quicklaps().reset_index()
-            style = plotting.get_driver_style(identifier=driver,
-                                      style=['color', 'linestyle'],
-                                      session=session)
-            ax.plot(laps['LapTime'], **style, label=driver)
-        ax.set_xlabel("Lap Number")
-        ax.set_ylabel("Lap Time")
-        ax.legend()
+        
+        selected_drivers = st.multiselect("Choose Driver:", drivers, default=drivers[:3])  # Default to first 3 drivers
+        
+        if not selected_drivers:
+            st.warning("Please select at least one driver")
+        else:
+            fig, ax = plt.subplots(figsize=(12, 6))
+            
+            for driver in selected_drivers:
+                driver_laps = session.laps.pick_drivers(driver).pick_quicklaps().reset_index()
+                
+                if not driver_laps.empty:
+                    style = fastf1.plotting.get_driver_style(
+                        identifier=driver,
+                        style=['color', 'linestyle'],
+                        session=session
+                    )
+                    # Plot LapNumber on x-axis and LapTime on y-axis
+                    ax.plot(driver_laps['LapNumber'], driver_laps['LapTime'], **style, label=driver)
+            
+            ax.set_xlabel("Lap Number", fontsize=12)
+            ax.set_ylabel("Lap Time", fontsize=12)
+            ax.set_title("Lap Time Progression", fontsize=14)
+            ax.legend(loc='best')
+            ax.grid(True, alpha=0.3)
+            
+            plt.tight_layout()
+            st.pyplot(fig)
         
 
 except Exception as e:
