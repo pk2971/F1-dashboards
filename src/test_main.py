@@ -60,6 +60,17 @@ try:
         else:
             tyre_strategies(session , selected_drivers , laps , year , event)
 
+    with tab3:
+        st.subheader("Lap Time Analysis")
+        fastf1.plotting.setup_mpl(mpl_timedelta_support=True, color_scheme='fastf1')
+        
+        selected_drivers = st.multiselect("Choose Driver:", drivers, default=drivers[:3] , key = "Lap_time")  # Default to first 3 drivers
+        
+        if not selected_drivers:
+            st.warning("Please select at least one driver")
+        else:
+            lap_time_analysis(session , selected_drivers)
+
 
 except:
     st.error(f"⚠️ Could not load session: {e}")
