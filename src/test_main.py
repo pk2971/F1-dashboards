@@ -11,7 +11,7 @@ from laptimeanalysis import lap_time_analysis
 
 st.set_page_config(page_title="F1 Dashboard", layout="wide")
 
-st.title("🏎️💨 F1 Race Dashboard")
+st.title("🏎️💨 F1 Race Dashboard ")
 
 # --- Sidebar controls ---
 year = st.sidebar.selectbox("Select Year", list(range(2020, 2026))[::-1], index=1)
