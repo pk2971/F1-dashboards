@@ -4,7 +4,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 
-from .data.data_loader import load_session
+from data_loader import load_session
 from racepositions import racepositions_plt
 
 st.set_page_config(page_title="F1 Dashboard", layout="wide")
