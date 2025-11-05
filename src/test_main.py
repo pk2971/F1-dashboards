@@ -7,7 +7,7 @@ from matplotlib.patches import Patch
 from data_loader import load_session
 from racepositions import racepositions_plt
 from tyrestrategies import tyre_strategies
-from laptimeanalysis import lap_time_analysis
+from laptime import lap_time_analysis
 
 st.set_page_config(page_title="F1 Dashboard", layout="wide")
 
