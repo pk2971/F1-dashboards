@@ -5,6 +5,8 @@ from matplotlib.patches import Patch
 import fastf1
 
 def tyre_strategies(session , selected_drivers , laps , year , event ):
+            fastf1.plotting.setup_mpl(color_scheme='fastf1')
+
                 # --- Laps slider ---
             min_lap = int(laps['LapNumber'].min())
             max_lap = int(laps['LapNumber'].max())

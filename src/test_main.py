@@ -70,8 +70,15 @@ try:
     
     with tab4:
         st.subheader("Telemetry Comparision") 
-        driver_1 = st.selectbox("Select driver 1: " , drivers , default=drivers , key = "Driver_1")
-        driver_2 = st.selectbox("Select driver 1: " , drivers , default=drivers , key = "Driver_2")
+        results = session.results.sort_values('Position')
+        p1_driver = results.iloc[0]['Abbreviation']
+        p2_driver = results.iloc[1]['Abbreviation']
+        driver_1 = st.selectbox("Select driver 1: " , drivers ,
+                                 index=drivers.index(p1_driver) if p1_driver in drivers else 0 ,
+                                   key = "Driver_1")
+        driver_2 = st.selectbox("Select driver 1: " , drivers ,
+                                 index=drivers.index(p2_driver) if p2_driver in drivers else 0 
+                                 , key = "Driver_2")
         telemetry_plots(session , driver_1 , driver_2 , laps)
 
 
