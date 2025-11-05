@@ -7,7 +7,7 @@ from matplotlib.patches import Patch
 from data_loader import load_session
 from racepositions import racepositions_plt
 from tyrestrategies import tyre_strategies
-from laptime import lap_time_analysis
+from laptime import lap_time
 
 st.set_page_config(page_title="F1 Dashboard", layout="wide")
 
@@ -70,7 +70,7 @@ try:
         if not selected_drivers:
             st.warning("Please select at least one driver")
         else:
-            lap_time_analysis(session , selected_drivers)
+            lap_time(session , selected_drivers)
 
 
 except:
