@@ -6,6 +6,7 @@ from matplotlib.patches import Patch
 
 from data_loader import load_session
 from racepositions import racepositions_plt
+from tyrestrategies import tyre_strategies
 
 st.set_page_config(page_title="F1 Dashboard", layout="wide")
 
@@ -34,7 +35,6 @@ try:
     tab1 , tab2 , tab3 = st.tabs(["Race Positions", "Tyre Strategies",  "Lap Time"])
 
     with tab1:
-        st.header("abc")
         st.subheader("Race Positions and Track Status")
         selected_drivers = st.multiselect(
             "Choose Driver:", 
@@ -48,6 +48,18 @@ try:
         else:
             racepositions_plt(session , selected_drivers)
     
+    with tab2:
+        st.subheader("Tyre Strategies")
+        st.subheader("Tyre Strategies")
+        
+        # --- Drivers selectbox ---
+        selected_drivers = st.multiselect("Choose Driver:", drivers, default=drivers , key = "Tyre_stints")
+        
+        if not selected_drivers:
+            st.warning("Please select at least one driver")
+        else:
+            tyre_strategies(session , selected_drivers , laps , year , event)
+
 
 except:
     st.error(f"⚠️ Could not load session: {e}")

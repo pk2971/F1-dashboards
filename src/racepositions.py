@@ -1,4 +1,5 @@
 import fastf1
+import fastf1.plotting
 import matplotlib.pyplot as plt
 import streamlit as st
 import pandas as pd 
