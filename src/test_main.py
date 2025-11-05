@@ -1,13 +1,11 @@
-import pandas as pd
 import fastf1.plotting
 import streamlit as st
-import matplotlib.pyplot as plt
-from matplotlib.patches import Patch
 
 from data_loader import load_session
 from racepositions import racepositions_plt
 from tyrestrategies import tyre_strategies
 from laptime import lap_time
+from telemetry import telemetry_plots
 
 st.set_page_config(page_title="F1 Dashboard", layout="wide")
 
@@ -33,7 +31,7 @@ try:
 
     st.success(f"Loaded {year} {event} GP {session_type} successfully")
 
-    tab1 , tab2 , tab3 = st.tabs(["Race Positions", "Tyre Strategies",  "Lap Time"])
+    tab1 , tab2 , tab3 , tab4 = st.tabs(["Race Positions", "Tyre Strategies",  "Lap Time" , "Telemetry Comparision"])
 
     with tab1:
         st.subheader("Race Positions and Track Status")
@@ -50,9 +48,7 @@ try:
             racepositions_plt(session , selected_drivers)
     
     with tab2:
-        st.subheader("Tyre Strategies")
-        st.subheader("Tyre Strategies")
-        
+        st.subheader("Tyre Strategies")        
         # --- Drivers selectbox ---
         selected_drivers = st.multiselect("Choose Driver:", drivers, default=drivers , key = "Tyre_stints")
         
@@ -71,6 +67,13 @@ try:
             st.warning("Please select at least one driver")
         else:
             lap_time(session , selected_drivers)
+    
+    with tab4:
+        st.subheader("Telemetry Comparision") 
+        driver_1 = st.selectbox("Select driver 1: " , drivers , default=drivers , key = "Driver_1")
+        driver_2 = st.selectbox("Select driver 1: " , drivers , default=drivers , key = "Driver_2")
+        telemetry_plots(session , driver_1 , driver_2 , laps)
+
 
 
 except:
