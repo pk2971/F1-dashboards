@@ -1,6 +1,7 @@
 import fastf1
 import matplotlib.pyplot as plt
 import streamlit as st
+import pandas as pd 
 
 def racepositions_plt(session , selected_drivers):
     fig, ax = plt.subplots(figsize=(20.0, 11))
