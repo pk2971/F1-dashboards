@@ -73,12 +73,28 @@ try:
         results = session.results.sort_values('Position')
         p1_driver = results.iloc[0]['Abbreviation']
         p2_driver = results.iloc[1]['Abbreviation']
-        driver_1 = st.selectbox("Select driver 1: " , drivers ,
-                                 index=drivers.index(p1_driver) if p1_driver in drivers else 0 ,
-                                   key = "Driver_1")
-        driver_2 = st.selectbox("Select driver 1: " , drivers ,
-                                 index=drivers.index(p2_driver) if p2_driver in drivers else 0 
-                                 , key = "Driver_2")
+        # Create two columns
+        col1, col2 = st.columns(2)
+
+        with col1:
+            driver_1 = st.selectbox(
+                "Select Driver 1:", 
+                drivers,
+                index=drivers.index(p1_driver) if p1_driver in drivers else 0,
+                key="Driver_1"
+            )
+
+        with col2:
+            driver_2 = st.selectbox(
+                "Select Driver 2:", 
+                drivers,
+                index=drivers.index(p2_driver) if p2_driver in drivers else 1,
+                key="Driver_2"
+            )  
+        min_lap = int(laps['LapNumber'].min())
+        max_lap = int(laps['LapNumber'].max())
+        options =  ["Fastest lap"] + list(range(min_lap, max_lap + 1))
+        selected_laps = st.selectbox("Choose lap: ", options , index = 0)    
         telemetry_plots(session , driver_1 , driver_2 , laps)
 
 
