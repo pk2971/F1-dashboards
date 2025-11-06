@@ -93,13 +93,12 @@ try:
             )  
         min_lap = int(laps['LapNumber'].min())
         max_lap = int(laps['LapNumber'].max())
-        options =  ["Fastest lap"] + list(range(min_lap, max_lap + 1))
-        selected_laps = st.selectbox("Choose lap: ", options , index = 0)    
+        lap_options =  ["Fastest lap"] + list(range(min_lap, max_lap + 1))
+        selected_laps = st.selectbox("Choose lap: ", lap_options , index = 0)    
         telemetry_plots(session , driver_1 , driver_2 )
 
 
-
-except:
+except Exception as e:
     st.error(f"⚠️ Could not load session: {e}")
     import traceback
     st.code(traceback.format_exc())
