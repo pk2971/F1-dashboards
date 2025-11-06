@@ -46,7 +46,7 @@ def racepositions_plt(session, selected_drivers):
     selected_laps = st.select_slider(
         "Choose lap numbers:",
         options=list(range(min_lap, max_lap + 1)),
-        value=(min_lap, max_lap)
+        value=(min_lap, max_lap) , key= "race_position"
     )
 
     # Filter laps for selected range
@@ -120,7 +120,7 @@ def tyre_strategies(session, selected_drivers, laps, year, event):
     selected_laps = st.select_slider(
         "Choose lap numbers:",
         options=list(range(min_lap, max_lap + 1)),
-        value=(min_lap, max_lap)
+        value=(min_lap, max_lap) , key = "tyre_strat"
     )
 
     driver_laps = laps[
