@@ -39,8 +39,11 @@ An interactive, data-driven **Formula 1 race analytics dashboard** built with **
 All source code is in the `source/` directory:
 
 source/
+
 ├─ Dashboard.py # Main Streamlit app
+
 ├─ data_loader.py # FastF1 session loader with caching
+
 └─ plot_functions.py # Functions for Race Positions, Tyre Strategies, and Lap Time plots
 
 
