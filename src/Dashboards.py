@@ -14,11 +14,11 @@ races= [
     "Bahrain", "Saudi Arabia", "Australia", "Azerbaijan", "Miami",
     "Emilia Romagna", "Monaco", "Spain", "Canada", "Austria",
     "Britain", "Hungary", "Belgium", "Netherlands", "Italy",
-    "Singapore", "Japan", "Qatar", "USA", "Mexico",
+    "Singapore", "Japan", "Qatar", "Texas", "Mexico",
     "Brazil", "Las Vegas", "Abu Dhabi"
 ]
 event = st.sidebar.selectbox("Select Grand Prix", options=races, index=races.index("Australia"))
-session_type = st.sidebar.selectbox("Session Type", ["R", "Q"], index=0)
+session_type = st.sidebar.selectbox("Session Type", ["Race", "Qualifying"], index=0)
 
 try:
     session = load_session(year, event, session_type)

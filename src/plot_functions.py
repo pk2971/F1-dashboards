@@ -36,16 +36,32 @@ def lap_time(session, selected_drivers):
 
 def racepositions_plt(session, selected_drivers):
     """
-    Plot race positions and track status for selected drivers.
+    Plot race positions and track status for selected drivers with lap selection.
     """
     fastf1.plotting.setup_mpl(color_scheme='fastf1')
+
+    # --- Lap selection slider ---
+    min_lap = int(session.laps['LapNumber'].min())
+    max_lap = int(session.laps['LapNumber'].max())
+    selected_laps = st.select_slider(
+        "Choose lap numbers:",
+        options=list(range(min_lap, max_lap + 1)),
+        value=(min_lap, max_lap)
+    )
+
+    # Filter laps for selected range
+    laps_filtered = session.laps[
+        (session.laps['LapNumber'] >= selected_laps[0]) &
+        (session.laps['LapNumber'] <= selected_laps[1])
+    ].copy()
+
     fig, ax = plt.subplots(figsize=(20, 11))
 
     # Track status flags
     flag_legend_added = {'red': False, 'yellow': False, 'orange': False}
 
-    for lap_num in session.laps['LapNumber'].unique():
-        lap_data = session.laps[session.laps['LapNumber'] == lap_num].iloc[0]
+    for lap_num in laps_filtered['LapNumber'].unique():
+        lap_data = laps_filtered[laps_filtered['LapNumber'] == lap_num].iloc[0]
 
         if 'TrackStatus' in lap_data and pd.notna(lap_data['TrackStatus']):
             track_status = str(lap_data['TrackStatus'])
@@ -65,7 +81,7 @@ def racepositions_plt(session, selected_drivers):
 
     # Plot driver positions
     for drv in selected_drivers:
-        drv_laps = session.laps.pick_drivers(drv)
+        drv_laps = laps_filtered.pick_drivers(drv)
         if len(drv_laps) == 0:
             continue
         abb = drv_laps['Driver'].iloc[0]
@@ -78,8 +94,8 @@ def racepositions_plt(session, selected_drivers):
     ax.set_yticks(range(1, num_drivers + 1))
 
     # x-axis (laps)
-    max_lap = session.laps['LapNumber'].max()
-    ax.set_xticks(range(1, int(max_lap) + 1))
+    ax.set_xlim(selected_laps[0] - 0.5, selected_laps[1] + 0.5)
+    ax.set_xticks(range(selected_laps[0], selected_laps[1] + 1))
 
     ax.set_xlabel('Lap', fontsize=12)
     ax.set_ylabel('Position', fontsize=12)
