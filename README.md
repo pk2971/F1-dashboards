@@ -1,16 +1,61 @@
-# Interactive Formula 1 Race Analytics Dashboard 
+# 🏎️ Interactive Formula 1 Race Analytics Dashboard  
 
-Link to live Streamlit Dashboard : https://f1-dashboards-bc3ecpp8ahwayw6bw33fpf.streamlit.app/ 
+**Live Demo:** [Streamlit Dashboard](https://f1-dashboards-bc3ecpp8ahwayw6bw33fpf.streamlit.app/)  
 
-Built an interactive Streamlit dashboard analyzing Formula 1 race sessions (2020–2025) using the FastF1 API, Matplotlib, and Pandas. The dashboard enables dynamic exploration of race dynamics with three key visual modules:
+An interactive, data-driven **Formula 1 race analytics dashboard** built with **Streamlit**, **FastF1**, **Matplotlib**, and **Pandas**. The dashboard provides a deep dive into race sessions from **2020–2025**, enabling dynamic exploration of driver performance, tyre strategies, and track events.  
 
-## Race Position Tracker:
-Visualizes real-time driver position changes per lap with overlays for safety cars, red flags, and VSC periods.
+---
 
-## Tyre Strategy Analyzer: 
-Displays stint durations and compound usage per driver with rainfall overlays, offering insights into pit strategies and weather impact.
+## Features
 
-## Lap Time Comparison: 
-Charts lap-time evolution and performance consistency across selected drivers using quick-lap filtering.
-## Cache:
-Integrated caching for faster loading and FastF1’s styling utilities for driver-specific colors and tyre compounds. Designed to make complex telemetry data visually intuitive and accessible for fans and analysts alike.
+### 1. Race Position Tracker
+- Visualizes **driver position changes lap-by-lap**.  
+- Overlays highlight **Safety Cars, Red Flags, and Virtual Safety Car (VSC) periods**.  
+- Select specific laps and drivers for custom race views.  
+
+### 2. Tyre Strategy Analyzer
+- Displays **stint lengths and tyre compounds** per driver.  
+- Integrates **rainfall overlays** for weather-sensitive strategy analysis.  
+- Provides insights into **pit stops, tyre management, and strategy choices**.  
+
+### 3. Lap Time Comparison
+- Charts **lap-time progression** for selected drivers.  
+- Highlights **performance consistency** and race pace dynamics.  
+- Filters for **quick laps** to focus on optimal driver performance.  
+
+---
+
+## Technical Highlights
+- **Interactive filters:** Select drivers, laps, and session types dynamically.  
+- **FastF1 integration:** Fetches race telemetry, weather, and session metadata.  
+- **Caching:** Optimized for faster load times with `st.cache_data`.  
+- **Matplotlib customization:** Driver-specific colors and tyre compound palettes for clear, intuitive visuals.  
+- **Multi-tab layout:** Modular design for Race Positions, Tyre Strategies, and Lap Times.  
+- Developed in **VSCode**, hosted on **Streamlit**.  
+
+---
+
+## Project Structure
+All source code is in the `source/` directory:
+
+source/
+├─ Dashboard.py # Main Streamlit app
+├─ data_loader.py # FastF1 session loader with caching
+└─ plot_functions.py # Functions for Race Positions, Tyre Strategies, and Lap Time plots
+
+
+---
+
+## How to Run Locally
+
+1. Clone the repository:  
+```bash
+git clone <repo-url>
+cd <repo-folder>/source
+pip install requirements.txt
+```
+2. Install dependecies
+` pip install requirements.txt`
+3. Start the Streamlit dashboard:
+`streamlit run Dashboard.py`
+
