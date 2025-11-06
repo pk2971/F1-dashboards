@@ -6,7 +6,7 @@ from matplotlib.pyplot import figure
 plotting.setup_mpl()
 def telemetry_plots(session , driver_1 , driver_2 , selected_laps):
     # Load all race laps
-    race_laps = session.load().laps
+    race_laps = session.laps
 
 
     # Load laps of drivers
