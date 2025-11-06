@@ -2,7 +2,8 @@
 
 **Live Demo:** [Streamlit Dashboard](https://f1-dashboards-bc3ecpp8ahwayw6bw33fpf.streamlit.app/)  
 
-An interactive, data-driven **Formula 1 race analytics dashboard** built with **Streamlit**, **FastF1**, **Matplotlib**, and **Pandas**. The dashboard provides a deep dive into race sessions from **2020–2025**, enabling dynamic exploration of driver performance, tyre strategies, and track events.  
+**Medium Article:**  
+A detailed article is in progress where I will discuss each dashboard module in depth, including the design choices, interactivity, and insights derived from the data. *Coming soon…*
 
 ---
 
