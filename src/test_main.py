@@ -95,7 +95,14 @@ try:
         max_lap = int(laps['LapNumber'].max())
         lap_options =  ["Fastest lap"] + list(range(min_lap, max_lap + 1))
         selected_laps = st.selectbox("Choose lap: ", lap_options , index = 0)    
-        telemetry_plots(session , driver_1 , driver_2 )
+        fastest_driver_1 = session.laps.pick_drivers("VER").pick_fastest()
+        fastest_driver_2 = session.laps.pick_drivers("GAS").pick_fastest()
+
+        # Get telemetry from fastest laps
+        telemetry_driver_1 = fastest_driver_1.get_car_data().add_distance()
+        telemetry_driver_2 = fastest_driver_2.get_car_data().add_distance()
+        st.subheader(telemetry_driver_1)
+        # telemetry_plots(session , driver_1 , driver_2 )
 
 
 except Exception as e:
