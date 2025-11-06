@@ -1,10 +1,11 @@
 import streamlit as st
-import fastf1
 from fastf1 import plotting
 from matplotlib import pyplot as plt
 from matplotlib.pyplot import figure
 plotting.setup_mpl()
 def telemetry_plots(session , driver_1 , driver_2 , selected_laps):
+    if not session.laps.pick_drivers(driver_1).pick_fastest().get_car_data()._car_data_loaded:
+        session.load(telemetry=True)
     
     # Test for plot
     fastest_driver_1 = session.laps.pick_drivers(driver_1).pick_fastest()
