@@ -5,17 +5,18 @@ from matplotlib import pyplot as plt
 from matplotlib.pyplot import figure
 plotting.setup_mpl()
 def telemetry_plots(session , driver_1 , driver_2 , selected_laps):
-    # Load all race laps
-    race_laps = session.laps
+    # # Load all race laps
+    # race_laps = session.laps
 
+    # driver_laps = session.laps.pick_drivers(driver).pick_quicklaps()
 
-    # Load laps of drivers
-    laps_driver_1 = race_laps.pick_driver(driver_1)
-    laps_driver_2 = race_laps.pick_driver(driver_2)
+    # # Load laps of drivers
+    # laps_driver_1 = race_laps.pick_driver(driver_1)
+    # laps_driver_2 = race_laps.pick_driver(driver_2)
 
     # Test for plot
-    fastest_driver_1 = laps_driver_1.pick_fastest()
-    fastest_driver_2 = laps_driver_2.pick_fastest()
+    fastest_driver_1 = session.laps.pick_drivers(driver_1).pick_fastest()
+    fastest_driver_2 = session.laps.pick_drivers(driver_2).pick_fastest()
 
     # Get telemetry from fastest laps
     telemetry_driver_1 = fastest_driver_1.get_car_data().add_distance()
