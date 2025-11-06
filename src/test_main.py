@@ -1,7 +1,7 @@
 import fastf1.plotting
 import streamlit as st
 
-from data_loader import load_session
+from data_loader import load_session , load_telemetry_session
 from racepositions import racepositions_plt
 from tyrestrategies import tyre_strategies
 from laptime import lap_time
@@ -25,6 +25,7 @@ session_type = st.sidebar.selectbox("Session Type", ["R", "Q"], index=0)
 
 try:
     session = load_session(year, event, session_type)
+    session_telemetry = load_telemetry_session(year, event, session_type)
     laps = session.laps
     drivers = session.drivers
     drivers = [session.get_driver(drv)["Abbreviation"] for drv in drivers]
@@ -95,14 +96,8 @@ try:
         max_lap = int(laps['LapNumber'].max())
         lap_options =  ["Fastest lap"] + list(range(min_lap, max_lap + 1))
         selected_laps = st.selectbox("Choose lap: ", lap_options , index = 0)    
-        fastest_driver_1 = session.laps.pick_drivers("VER").pick_fastest()
-        fastest_driver_2 = session.laps.pick_drivers("GAS").pick_fastest()
+        telemetry_plots(session_telemetry)
 
-        # Get telemetry from fastest laps
-        telemetry_driver_1 = fastest_driver_1.get_car_data().add_distance()
-        telemetry_driver_2 = fastest_driver_2.get_car_data().add_distance()
-        st.subheader(telemetry_driver_1)
-        # telemetry_plots(session , driver_1 , driver_2 )
 
 
 except Exception as e:

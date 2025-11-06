@@ -1,16 +1,30 @@
+import matplotlib.pyplot as plt
+
+import fastf1.plotting
 import streamlit as st
-from fastf1 import plotting
-from matplotlib import pyplot as plt
-from matplotlib.pyplot import figure
-plotting.setup_mpl()
-def telemetry_plots(session , driver_1 , driver_2 ):
-    fastest_driver_1 = session.laps.pick_drivers(driver_1).pick_fastest()
-    fastest_driver_2 = session.laps.pick_drivers(driver_2).pick_fastest()
 
-    # Get telemetry from fastest laps
-    telemetry_driver_1 = fastest_driver_1.get_car_data().add_distance()
-    telemetry_driver_2 = fastest_driver_2.get_car_data().add_distance()
-    st.header(telemetry_driver_1)
-    st.header(telemetry_driver_2)
+# Enable Matplotlib patches for plotting timedelta values and load
+# FastF1's dark color scheme
+fastf1.plotting.setup_mpl(mpl_timedelta_support=True, color_scheme='fastf1')
 
-    
+def telemetry_plots(session):
+    ver_lap = session.laps.pick_drivers('VER').pick_fastest()
+    ham_lap = session.laps.pick_drivers('HAM').pick_fastest()
+    ver_tel = ver_lap.get_car_data().add_distance()
+    ham_tel = ham_lap.get_car_data().add_distance()
+    rbr_color = fastf1.plotting.get_team_color(ver_lap['Team'], session=session)
+    mer_color = fastf1.plotting.get_team_color(ham_lap['Team'], session=session)
+
+    fig, ax = plt.subplots()
+    ax.plot(ver_tel['Distance'], ver_tel['Speed'], color=rbr_color, label='VER')
+    ax.plot(ham_tel['Distance'], ham_tel['Speed'], color=mer_color, label='HAM')
+
+    ax.set_xlabel('Distance in m')
+    ax.set_ylabel('Speed in km/h')
+
+    ax.legend()
+    plt.suptitle(f"Fastest Lap Comparison \n "
+                f"{session.event['EventName']} {session.event.year} Qualifying")
+
+    # plt.show()
+    st.pyplot(fig)
