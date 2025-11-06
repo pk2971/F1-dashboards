@@ -71,6 +71,7 @@ try:
             lap_time(session , selected_drivers)
     
     with tab4:
+        
         st.subheader("Telemetry Comparision") 
         driver_1 = st.selectbox(
                 "Select Driver 1:", 
@@ -84,16 +85,16 @@ try:
                 index=1,
                 key="Driver_2"
             )  
-        ver_lap = session.laps.pick_drivers('driver_1').pick_fastest()
-        ham_lap = session.laps.pick_drivers('driver_2').pick_fastest()
+        ver_lap = session.laps.pick_drivers(driver_1).pick_fastest()
+        ham_lap = session.laps.pick_drivers(driver_2).pick_fastest()
         ver_tel = ver_lap.get_car_data().add_distance()
         ham_tel = ham_lap.get_car_data().add_distance()
         rbr_color = fastf1.plotting.get_team_color(ver_lap['Team'], session=session)
         mer_color = fastf1.plotting.get_team_color(ham_lap['Team'], session=session)
 
         fig, ax = plt.subplots()
-        ax.plot(ver_tel['Distance'], ver_tel['Speed'], color=rbr_color, label='VER')
-        ax.plot(ham_tel['Distance'], ham_tel['Speed'], color=mer_color, label='HAM')
+        ax.plot(ver_tel['Distance'], ver_tel['Speed'], color=rbr_color, label=driver_1)
+        ax.plot(ham_tel['Distance'], ham_tel['Speed'], color=mer_color, label=driver_2)
 
         ax.set_xlabel('Distance in m')
         ax.set_ylabel('Speed in km/h')
@@ -101,6 +102,9 @@ try:
         plt.suptitle(f"Fastest Lap Comparison \n"
                     f"{session.event['EventName']} {session.event.year} Qualifying")
 
+        # Use Streamlit to display the figure
+        st.pyplot(fig)
+        
         # Use Streamlit to display the figure
         st.pyplot(fig)
         
