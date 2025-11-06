@@ -1,10 +1,9 @@
 # plot_functions.py
-import matplotlib.pyplot as plt
-import streamlit as st
-import pandas as pd
-from matplotlib.patches import Patch
 import fastf1
-
+import pandas as pd
+import streamlit as st
+import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 
 def lap_time(session, selected_drivers):
     """
