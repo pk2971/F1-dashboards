@@ -7,6 +7,12 @@ A detailed article is in progress where I will discuss each dashboard module in 
 
 ---
 
+An interactive, data-driven **Formula 1 race analytics dashboard** built with **Streamlit**, **FastF1**, **Matplotlib**, and **Pandas**. The dashboard allows users to explore race sessions from **2020–2025** with interactive visualizations and detailed telemetry insights.  
+
+All race session data is sourced from the **[FastF1 API](https://theoehrly.github.io/Fast-F1/)** — an open-source Python library that provides access to Formula 1 timing, telemetry, and weather data.  
+
+---
+
 ## Features
 
 ### 1. Race Position Tracker
