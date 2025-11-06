@@ -3,7 +3,8 @@ import fastf1
 import streamlit as st
 
 def lap_time(session, selected_drivers):
-    
+
+    fastf1.plotting.setup_mpl(color_scheme='fastf1')
     fig, ax = plt.subplots(figsize=(12, 6))
             
     for driver in selected_drivers:

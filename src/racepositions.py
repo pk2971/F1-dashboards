@@ -5,6 +5,7 @@ import streamlit as st
 import pandas as pd 
 
 def racepositions_plt(session , selected_drivers):
+    fastf1.plotting.setup_mpl(color_scheme='fastf1')
     fig, ax = plt.subplots(figsize=(20.0, 11))
             
             # Add colored background spans for flags/safety car 
