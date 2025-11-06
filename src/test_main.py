@@ -95,7 +95,7 @@ try:
         max_lap = int(laps['LapNumber'].max())
         options =  ["Fastest lap"] + list(range(min_lap, max_lap + 1))
         selected_laps = st.selectbox("Choose lap: ", options , index = 0)    
-        telemetry_plots(session , driver_1 , driver_2 , selected_laps)
+        telemetry_plots(session , driver_1 , driver_2 )
 
 
 
