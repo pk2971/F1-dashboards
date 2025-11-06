@@ -50,8 +50,8 @@ source/
 
 1. Clone the repository:  
 ```bash
-git clone <repo-url>
-cd <repo-folder>/source
+git clone https://github.com/pk2971/F1-dashboards.git
+cd src
 pip install requirements.txt
 ```
 2. Install dependecies
