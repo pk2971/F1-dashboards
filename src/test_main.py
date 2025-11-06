@@ -1,12 +1,8 @@
 import fastf1.plotting
 import streamlit as st
 import matplotlib.pyplot as plt
-
-from data_loader import load_session , load_telemetry_session
-from racepositions import racepositions_plt
-from tyrestrategies import tyre_strategies
-from laptime import lap_time
-from telemetry import telemetry_plots
+from data_loader import load_session 
+from plot_functions import racepositions_plt , tyre_strategies , lap_time
 
 st.set_page_config(page_title="F1 Dashboard", layout="wide")
 
@@ -26,7 +22,6 @@ session_type = st.sidebar.selectbox("Session Type", ["R", "Q"], index=0)
 
 try:
     session = load_session(year, event, session_type)
-    session_telemetry = load_telemetry_session(year, event, session_type)
     laps = session.laps
     drivers = session.drivers
     drivers = [session.get_driver(drv)["Abbreviation"] for drv in drivers]
@@ -64,53 +59,13 @@ try:
         fastf1.plotting.setup_mpl(mpl_timedelta_support=True, color_scheme='fastf1')
         
         selected_drivers = st.multiselect("Choose Driver:", drivers, default=drivers[:3] , key = "Lap_time")  # Default to first 3 drivers
-        
+
         if not selected_drivers:
             st.warning("Please select at least one driver")
         else:
             lap_time(session , selected_drivers)
     
-    with tab4:
-        
-        st.subheader("Telemetry Comparision") 
-        driver_1 = st.selectbox(
-                "Select Driver 1:", 
-                drivers,
-                index=1,
-                key="Driver_1"
-            )  
-        driver_2 = st.selectbox(
-                "Select Driver 2:", 
-                drivers,
-                index=1,
-                key="Driver_2"
-            )  
-        ver_lap = session.laps.pick_drivers(driver_1).pick_fastest()
-        ham_lap = session.laps.pick_drivers(driver_2).pick_fastest()
-        ver_tel = ver_lap.get_car_data().add_distance()
-        ham_tel = ham_lap.get_car_data().add_distance()
-        rbr_color = fastf1.plotting.get_team_color(ver_lap['Team'], session=session)
-        mer_color = fastf1.plotting.get_team_color(ham_lap['Team'], session=session)
-
-        fig, ax = plt.subplots()
-        ax.plot(ver_tel['Distance'], ver_tel['Speed'], color=rbr_color, label=driver_1)
-        ax.plot(ham_tel['Distance'], ham_tel['Speed'], color=mer_color, label=driver_2)
-
-        ax.set_xlabel('Distance in m')
-        ax.set_ylabel('Speed in km/h')
-        ax.legend()
-        plt.suptitle(f"Fastest Lap Comparison \n"
-                    f"{session.event['EventName']} {session.event.year} Qualifying")
-
-        # Use Streamlit to display the figure
-        st.pyplot(fig)
-        
-        # Use Streamlit to display the figure
-        st.pyplot(fig)
-        
-
-
-
+    
 except Exception as e:
     st.error(f"⚠️ Could not load session: {e}")
     import traceback
