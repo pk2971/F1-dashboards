@@ -192,13 +192,9 @@ def tyre_strategies(year , event , session_type):
     ax1.set_yticklabels(list(driver_positions.keys()))
     ax1.invert_yaxis()  # top driver first
 
-    # X-ticks spacing
-    lap_range = selected_laps[1] - selected_laps[0] + 1
-    if lap_range <= 20:
-        ax1.set_xticks(range(selected_laps[0], selected_laps[1] + 1))
-    else:
-        step = max(1, lap_range // 20)
-        ax1.set_xticks(range(selected_laps[0], selected_laps[1] + 1, step))
+    # Show all lap numbers on x-axis
+    ax1.set_xticks(range(selected_laps[0], selected_laps[1] + 1))
+    ax1.set_xticklabels(range(selected_laps[0], selected_laps[1] + 1), rotation=90)
 
     ax1.grid(axis='x', linestyle='-', alpha=0.3)
     for spine in ['top', 'right', 'left']:
