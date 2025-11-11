@@ -294,7 +294,7 @@ def telemetry_driver_comparison(year, event, session_type):
         )
     
     # Pick fastest lap for driver_1
-    fastest_lap = laps.pick_driver(driver_1).pick_fastest()
+    fastest_lap = laps.pick_drivers(driver_1).pick_fastest()
 
     # Build a list of lap numbers available
     lap_numbers = [int(lap) for lap in laps['LapNumber'].unique()]
@@ -311,8 +311,8 @@ def telemetry_driver_comparison(year, event, session_type):
     st.markdown(f"### Comparing {driver_1} vs {driver_2} in {selected_lap}")
 
     # --- Fetch telemetry for the selected lap ---
-    lap_1 = session.laps.pick_driver(driver_1).pick_lap(selected_lap)
-    lap_2 = session.laps.pick_driver(driver_2).pick_lap(selected_lap)
+    lap_1 = session.laps.pick_drivers(driver_1).pick_laps(selected_lap)
+    lap_2 = session.laps.pick_drivers(driver_2).pick_laps(selected_lap)
 
     if lap_1.empty or lap_2.empty:
         st.warning(f"Telemetry not available for lap {selected_lap} for one or both drivers")
@@ -321,42 +321,22 @@ def telemetry_driver_comparison(year, event, session_type):
     tel_1 = lap_1.get_telemetry()
     tel_2 = lap_2.get_telemetry()
 
-    # --- Speed comparison ---
-    fig_speed, ax_speed = plt.subplots(figsize=(12, 6))
-    ax_speed.plot(tel_1['Distance'], tel_1['Speed'], label=driver_1, color='red')
-    ax_speed.plot(tel_2['Distance'], tel_2['Speed'], label=driver_2, color='blue')
-    ax_speed.set_xlabel("Distance (m)")
-    ax_speed.set_ylabel("Speed (km/h)")
-    ax_speed.set_title(f"Speed Comparison: Lap {selected_lap} - {driver_1} vs {driver_2}")
-    ax_speed.legend()
-    ax_speed.grid(True, alpha=0.3)
-    plt.tight_layout()
-    st.pyplot(fig_speed)
-    plt.close(fig_speed)  # Close the figure after rendering
+    # Store plots in a list of tuples (data, y-label, title)
+    plots = [
+        (tel_1['Distance'], tel_1['Speed'], tel_2['Speed'], 'Speed (km/h)'),
+        (tel_1['Distance'], tel_1['Brake'], tel_2['Brake'], 'Brake'),
+        (tel_1['Distance'], tel_1['Throttle'], tel_2['Throttle'], 'Throttle')
+    ]
 
-    # --- Brake comparison ---
-    fig_brake, ax_brake = plt.subplots(figsize=(12, 6))
-    ax_brake.plot(tel_1['Distance'], tel_1['Brake'], label=driver_1, color='red')
-    ax_brake.plot(tel_2['Distance'], tel_2['Brake'], label=driver_2, color='blue')
-    ax_brake.set_xlabel("Distance (m)")
-    ax_brake.set_ylabel("Brake")
-    ax_brake.set_title(f"Brake Comparison: Lap {selected_lap} - {driver_1} vs {driver_2}")
-    ax_brake.legend()
-    ax_brake.grid(True, alpha=0.3)
-    plt.tight_layout()
-    st.pyplot(fig_brake)
-    plt.close(fig_brake)
-
-    # --- Throttle comparison ---
-    fig_throttle, ax_throttle = plt.subplots(figsize=(12, 6))
-    ax_throttle.plot(tel_1['Distance'], tel_1['Throttle'], label=driver_1, color='red')
-    ax_throttle.plot(tel_2['Distance'], tel_2['Throttle'], label=driver_2, color='blue')
-    ax_throttle.set_xlabel("Distance (m)")
-    ax_throttle.set_ylabel("Throttle")
-    ax_throttle.set_title(f"Throttle Comparison: Lap {selected_lap} - {driver_1} vs {driver_2}")
-    ax_throttle.legend()
-    ax_throttle.grid(True, alpha=0.3)
-    plt.tight_layout()
-    st.pyplot(fig_throttle)
-    plt.close(fig_throttle)
-
+    # Loop over plots to avoid Streamlit overwriting
+    for idx, (x, y1, y2, ylabel) in enumerate(plots):
+        fig, ax = plt.subplots(figsize=(12, 6))
+        ax.plot(x, y1, label=driver_1, color='red')
+        ax.plot(x, y2, label=driver_2, color='blue')
+        ax.set_xlabel("Distance (m)")
+        ax.set_ylabel(ylabel)
+        ax.set_title(f"{ylabel} Comparison: Lap {selected_lap}")
+        ax.legend()
+        ax.grid(True, alpha=0.3)
+        st.pyplot(fig)
+        plt.close(fig)
