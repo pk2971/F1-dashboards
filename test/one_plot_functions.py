@@ -267,13 +267,13 @@ def telemetry_driver_comparison(year , event , session_type):
     driver_1 = st.selectbox(
             "Choose Driver 1:", 
             drivers, 
-            default=drivers[0],
+            index = 0,
             key="driver_1"
         )
     driver_2 = st.selectbox(
             "Choose Driver 2:", 
             drivers, 
-            default=drivers[1],
+            index = 1,
             key="driver_2"
         )
     st.write(f"Telemetry comparison coming soon for {driver_1} vs {driver_2}.")
