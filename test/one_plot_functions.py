@@ -226,7 +226,7 @@ def lap_time(year , event , session_type):
     selected_drivers = st.multiselect(
             "Choose Driver:", 
             drivers, 
-            default=drivers,
+            default=drivers[:3],
             key="lap_times"
         )
      
