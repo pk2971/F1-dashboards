@@ -217,31 +217,29 @@ def tyre_strategies(year , event , session_type):
     plt.tight_layout()
     st.pyplot(fig1)
 
-def lap_time(year , event , session_type):
-
+def lap_time(year, event, session_type):
     fastf1.plotting.setup_mpl(color_scheme='fastf1')
     session = load_session_light(year, event, session_type)
     drivers = session.drivers
     drivers = [session.get_driver(drv)["Abbreviation"] for drv in drivers]
     selected_drivers = st.multiselect(
-            "Choose Driver:", 
-            drivers, 
-            default=drivers[:3],
-            key="lap_times"
-        )
+        "Choose Driver:", 
+        drivers, 
+        default=drivers[:3],
+        key="lap_times"
+    )
      
     fig, ax = plt.subplots(figsize=(12, 6))
 
     for driver in selected_drivers:
         driver_laps = session.laps.pick_drivers(driver).pick_quicklaps().reset_index()
-
-    if not driver_laps.empty:
-        style = fastf1.plotting.get_driver_style(
-            identifier=driver,
-            style=['color', 'linestyle'],
-            session=session
-        )
-    ax.plot(driver_laps['LapNumber'], driver_laps['LapTime'], **style, label=driver)
+        if not driver_laps.empty:
+            style = fastf1.plotting.get_driver_style(
+                identifier=driver,
+                style=['color', 'linestyle'],
+                session=session
+            )
+            ax.plot(driver_laps['LapNumber'], driver_laps['LapTime'], **style, label=driver)
 
     ax.set_xlabel("Lap Number", fontsize=12)
     ax.set_ylabel("Lap Time", fontsize=12)
@@ -251,4 +249,3 @@ def lap_time(year , event , session_type):
 
     plt.tight_layout()
     st.pyplot(fig)
-
