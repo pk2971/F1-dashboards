@@ -333,3 +333,30 @@ def telemetry_driver_comparison(year, event, session_type):
     plt.tight_layout()
     st.pyplot(fig)
 
+    # --- Brake comparison ---
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.plot(tel_1['Distance'], tel_1['Brake'], label=driver_1, color='red')
+    ax.plot(tel_2['Distance'], tel_2['Brake'], label=driver_2, color='blue')
+    ax.set_xlabel("Distance (m)")
+    ax.set_ylabel("Brake")
+    ax.set_title(f"Brake Comparison: Lap {selected_lap} - {driver_1} vs {driver_2}")
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    plt.tight_layout()
+    st.pyplot(fig)
+
+    # --- Throttle Comparison ---
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.plot(tel_1['Distance'], tel_1['Throttle'], label=driver_1, color='red')
+    ax.plot(tel_2['Distance'], tel_2['Throttle'], label=driver_2, color='blue')
+    ax.set_xlabel("Distance (m)")
+    ax.set_ylabel("Throttle")
+    ax.set_title(f"Throttle Comparison: Lap {selected_lap} - {driver_1} vs {driver_2}")
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    plt.tight_layout()
+    st.pyplot(fig)
+
+
+
+
