@@ -292,8 +292,10 @@ def telemetry_driver_comparison(year, event, session_type):
             index=1,
             key="driver_2"
         )
-    # Pick fastest lap for driver_1
-    fastest_lap = laps.pick_driver(driver_1).pick_fastest()
+    col = st.columns(1)
+    with col:
+        # Pick fastest lap for driver_1
+        fastest_lap = laps.pick_driver(driver_1).pick_fastest()
 
     # Build a list of lap numbers available
     lap_numbers = [int(lap) for lap in laps['LapNumber'].unique()]
@@ -303,29 +305,32 @@ def telemetry_driver_comparison(year, event, session_type):
 
 # Streamlit selectbox with default as fastest lap
     selected_lap = st.selectbox(
-    "Select lap to compare:",
+    "Select lap to compare: (Default - Fastest lap of Driver 1)",
     options=lap_numbers,
     index=fastest_index
     )
     st.markdown(f"### Comparing {driver_1} vs {driver_2} in {selected_lap}")
 
-    # # --- Fetch telemetry for both drivers ---
-    # tel_1 = session.laps.pick_driver(driver_1).get_telemetry()
-    # tel_2 = session.laps.pick_driver(driver_2).get_telemetry()
+    # --- Fetch telemetry for the selected lap ---
+    lap_1 = session.laps.pick_driver(driver_1).pick_lap(selected_lap)
+    lap_2 = session.laps.pick_driver(driver_2).pick_lap(selected_lap)
 
-    # if tel_1.empty or tel_2.empty:
-    #     st.warning("Telemetry data not available for one or both drivers")
-    #     return
+    if lap_1.empty or lap_2.empty:
+        st.warning(f"Telemetry not available for lap {selected_lap} for one or both drivers")
+        return
 
-    # # --- Example plot: speed comparison ---
-    # fig, ax = plt.subplots(figsize=(12, 6))
-    # ax.plot(tel_1['Distance'], tel_1['Speed'], label=driver_1, color='red')
-    # ax.plot(tel_2['Distance'], tel_2['Speed'], label=driver_2, color='blue')
-    # ax.set_xlabel("Distance (m)")
-    # ax.set_ylabel("Speed (km/h)")
-    # ax.set_title(f"Speed Comparison: {driver_1} vs {driver_2}")
-    # ax.legend()
-    # ax.grid(True, alpha=0.3)
-    # plt.tight_layout()
-    # st.pyplot(fig)
+    tel_1 = lap_1.get_telemetry()
+    tel_2 = lap_2.get_telemetry()
+
+    # --- Plot example: speed comparison ---
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.plot(tel_1['Distance'], tel_1['Speed'], label=driver_1, color='red')
+    ax.plot(tel_2['Distance'], tel_2['Speed'], label=driver_2, color='blue')
+    ax.set_xlabel("Distance (m)")
+    ax.set_ylabel("Speed (km/h)")
+    ax.set_title(f"Speed Comparison: Lap {selected_lap} - {driver_1} vs {driver_2}")
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    plt.tight_layout()
+    st.pyplot(fig)
 
