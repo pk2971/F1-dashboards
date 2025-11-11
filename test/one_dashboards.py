@@ -1,7 +1,6 @@
 import fastf1.plotting
 import streamlit as st
 import matplotlib.pyplot as plt
-from data_loader import load_session 
 import matplotlib.units as munits
 munits.registry.clear()  # clear timple converter
 from one_plot_functions import racepositions_plt 
