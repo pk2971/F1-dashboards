@@ -292,10 +292,9 @@ def telemetry_driver_comparison(year, event, session_type):
             index=1,
             key="driver_2"
         )
-    col = st.columns(1)
-    with col:
-        # Pick fastest lap for driver_1
-        fastest_lap = laps.pick_driver(driver_1).pick_fastest()
+    
+    # Pick fastest lap for driver_1
+    fastest_lap = laps.pick_driver(driver_1).pick_fastest()
 
     # Build a list of lap numbers available
     lap_numbers = [int(lap) for lap in laps['LapNumber'].unique()]
