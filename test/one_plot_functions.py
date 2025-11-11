@@ -255,34 +255,63 @@ def lap_time(year, event, session_type):
     plt.tight_layout()
     st.pyplot(fig)
 
-def telemetry_driver_comparison(year , event , session_type):
+import streamlit as st
+import fastf1
+import matplotlib.pyplot as plt
+
+def telemetry_driver_comparison(year, event, session_type):
+    """
+    Compare telemetry data between two drivers side by side.
+    """
+
     fastf1.plotting.setup_mpl(color_scheme='fastf1')
 
-    # Load session (make sure it’s fully loaded)
-    session = load_session(year, event, session_type)
+    # Load session fully
+    session = fastf1.get_session(year, event, session_type)
     session.load()
 
-    # Extract driver abbreviations
+    # Get driver abbreviations
     drivers = [session.get_driver(drv)["Abbreviation"] for drv in session.drivers]
-    col1, col2 = st.columns(2)  # create 2 columns side by side
-    st.set_page_config(layout="wide")
+
+    # Create two columns for selectboxes
+    col1, col2 = st.columns(2)
+
     with col1:
         driver_1 = st.selectbox(
-            "Choose Driver 1:", 
-            drivers, 
+            "Driver 1:",
+            options=drivers,
             index=0,
             key="driver_1"
         )
 
     with col2:
         driver_2 = st.selectbox(
-            "Choose Driver 2:", 
-            drivers, 
+            "Driver 2:",
+            options=drivers,
             index=1,
             key="driver_2"
         )
 
-    st.write(f"Telemetry comparison coming soon for {driver_1} vs {driver_2}.")
+    st.markdown(f"### Comparing {driver_1} vs {driver_2}")
 
+    # --- Fetch telemetry for both drivers ---
+    tel_1 = session.laps.pick_driver(driver_1).get_telemetry()
+    tel_2 = session.laps.pick_driver(driver_2).get_telemetry()
 
+    if tel_1.empty or tel_2.empty:
+        st.warning("Telemetry data not available for one or both drivers")
+        return
 
+    # --- Example plot: speed comparison ---
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.plot(tel_1['Distance'], tel_1['Speed'], label=driver_1, color='red')
+    ax.plot(tel_2['Distance'], tel_2['Speed'], label=driver_2, color='blue')
+    ax.set_xlabel("Distance (m)")
+    ax.set_ylabel("Speed (km/h)")
+    ax.set_title(f"Speed Comparison: {driver_1} vs {driver_2}")
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    plt.tight_layout()
+    st.pyplot(fig)
+
+    # You can extend this to other telemetry channels like RPM, throttle, brake, etc.
