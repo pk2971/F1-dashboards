@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
-from one_data_loader import load_session_light , load_session_weather
+from one_data_loader import load_session_light , load_session_weather ,  load_session
 
 def racepositions_plt(year , event , session_type):
     """
@@ -117,8 +117,6 @@ def tyre_strategies(year , event , session_type):
             key="tyre_strat_driver"
         )
     
-    fastf1.plotting.setup_mpl(color_scheme='fastf1')
-
     # --- Lap selection slider ---
     min_lap = int(laps['LapNumber'].min())
     max_lap = int(laps['LapNumber'].max())
@@ -256,3 +254,29 @@ def lap_time(year, event, session_type):
 
     plt.tight_layout()
     st.pyplot(fig)
+
+def telemetry_driver_comparison(year , event , session_type):
+    fastf1.plotting.setup_mpl(color_scheme='fastf1')
+
+    # Load session (make sure it’s fully loaded)
+    session = load_session(year, event, session_type)
+    session.load()
+
+    # Extract driver abbreviations
+    drivers = [session.get_driver(drv)["Abbreviation"] for drv in session.drivers]
+    driver_1 = st.select(
+            "Choose Driver 1:", 
+            drivers, 
+            default=drivers[0],
+            key="driver_1"
+        )
+    driver_2 = st.select(
+            "Choose Driver 2:", 
+            drivers, 
+            default=drivers[1],
+            key="driver_2"
+        )
+    st.header(driver_1)
+    st.header(driver_2)
+
+
