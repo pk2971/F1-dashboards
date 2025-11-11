@@ -276,7 +276,7 @@ def telemetry_driver_comparison(year , event , session_type):
             default=drivers[1],
             key="driver_2"
         )
-    st.header(driver_1)
-    st.header(driver_2)
+    st.write(f"Telemetry comparison coming soon for {driver_1} vs {driver_2}.")
+
 
 
