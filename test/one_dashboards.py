@@ -3,7 +3,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import matplotlib.units as munits
 munits.registry.clear()  # clear timple converter
-from one_plot_functions import racepositions_plt , tyre_strategies 
+from one_plot_functions import racepositions_plt , tyre_strategies , lap_time
 
 st.set_page_config(page_title="F1 Dashboard", layout="wide")
 
@@ -29,4 +29,5 @@ with tab2:
     st.subheader("Tyre Strategies")
     tyre_strategies(year , event , session_type)
 with tab3:
-    st.subheader("coming soon")
+    st.subheader("Lap Times")
+    lap_time(year , event , session_type)
