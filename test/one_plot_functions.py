@@ -74,9 +74,21 @@ def racepositions_plt(year , event , session_type):
             ax.plot(drv_laps['LapNumber'], drv_laps['Position'], label=abb, **style)
 
         # y-axis (positions)
-        num_drivers = len(session.drivers)
-        ax.set_ylim([num_drivers + 0.5, 0.5])
-        ax.set_yticks(range(1, num_drivers + 1))
+        # y-axis (positions for selected drivers only)
+        all_positions = []
+        for drv in selected_drivers:
+            drv_laps = laps_filtered.pick_drivers(drv)
+            if len(drv_laps) > 0:
+                all_positions.extend(drv_laps['Position'].tolist())
+
+        if all_positions:
+            min_pos = min(all_positions)
+            max_pos = max(all_positions)
+        else:
+            min_pos, max_pos = 1, len(session.drivers)
+
+        ax.set_ylim([max_pos + 0.5, min_pos - 0.5])
+        ax.set_yticks(range(min_pos, max_pos + 1))
 
         # x-axis (laps)
         ax.set_xlim(selected_laps[0] - 0.5, selected_laps[1] + 0.5)
