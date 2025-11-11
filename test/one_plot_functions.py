@@ -3,7 +3,7 @@ import fastf1
 import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
-from one_data_loader import load_session , load_session_light , load_session_weather
+from one_data_loader import load_session_light 
 
 def racepositions_plt(year , event , session_type):
     """
