@@ -296,10 +296,10 @@ def telemetry_driver_comparison(year, event, session_type):
     fastest_lap = laps.pick_driver(driver_1).pick_fastest()
 
     # Build a list of lap numbers available
-    lap_numbers = laps['LapNumber'].unique().tolist()
+    lap_numbers = [int(lap) for lap in laps['LapNumber'].unique()]
 
-    # Find the index of the fastest lap in this list
-    fastest_index = lap_numbers.index(fastest_lap['LapNumber'])
+    # Find the index of the fastest lap
+    fastest_index = lap_numbers.index(int(fastest_lap['LapNumber']))
 
 # Streamlit selectbox with default as fastest lap
     selected_lap = st.selectbox(
