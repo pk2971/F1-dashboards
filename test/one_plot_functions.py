@@ -73,7 +73,6 @@ def racepositions_plt(year , event , session_type):
             style = fastf1.plotting.get_driver_style(identifier=abb, style=['color', 'linestyle'], session=session)
             ax.plot(drv_laps['LapNumber'], drv_laps['Position'], label=abb, **style)
 
-        # y-axis (positions)
         # y-axis (positions for selected drivers only)
         all_positions = []
         for drv in selected_drivers:
@@ -88,7 +87,7 @@ def racepositions_plt(year , event , session_type):
             min_pos, max_pos = 1, len(session.drivers)
 
         ax.set_ylim([max_pos + 0.5, min_pos - 0.5])
-        ax.set_yticks(range(min_pos, max_pos + 1))
+        ax.set_yticks(range(int(min_pos), int(max_pos) + 1))
 
         # x-axis (laps)
         ax.set_xlim(selected_laps[0] - 0.5, selected_laps[1] + 0.5)
