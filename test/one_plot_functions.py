@@ -114,7 +114,7 @@ def tyre_strategies(year , event , session_type):
             "Choose Driver:", 
             drivers, 
             default=drivers,
-            key="race_positions"
+            key="tyre_strat_driver"
         )
     
     fastf1.plotting.setup_mpl(color_scheme='fastf1')
@@ -126,7 +126,7 @@ def tyre_strategies(year , event , session_type):
         "Choose lap numbers:",
         options=list(range(min_lap, max_lap + 1)),
         value=(min_lap, max_lap),
-        key="tyre_strat"
+        key="tyre_strat_laps"
     )
 
     # Filter laps for selected drivers and lap range
