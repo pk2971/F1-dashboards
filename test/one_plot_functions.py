@@ -264,18 +264,24 @@ def telemetry_driver_comparison(year , event , session_type):
 
     # Extract driver abbreviations
     drivers = [session.get_driver(drv)["Abbreviation"] for drv in session.drivers]
-    driver_1 = st.selectbox(
+    col1, col2 = st.columns(2)  # create 2 columns side by side
+
+    with col1:
+        driver_1 = st.selectbox(
             "Choose Driver 1:", 
             drivers, 
-            index = 0,
+            index=0,
             key="driver_1"
         )
-    driver_2 = st.selectbox(
+
+    with col2:
+        driver_2 = st.selectbox(
             "Choose Driver 2:", 
             drivers, 
-            index = 1,
+            index=1,
             key="driver_2"
         )
+
     st.write(f"Telemetry comparison coming soon for {driver_1} vs {driver_2}.")
 
 
