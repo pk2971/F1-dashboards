@@ -265,7 +265,7 @@ def telemetry_driver_comparison(year , event , session_type):
     # Extract driver abbreviations
     drivers = [session.get_driver(drv)["Abbreviation"] for drv in session.drivers]
     col1, col2 = st.columns(2)  # create 2 columns side by side
-
+    st.set_page_config(layout="wide")
     with col1:
         driver_1 = st.selectbox(
             "Choose Driver 1:", 
