@@ -227,7 +227,7 @@ def lap_time(year , event , session_type):
             "Choose Driver:", 
             drivers, 
             default=drivers,
-            key="race_positions"
+            key="lap_times"
         )
      
     fig, ax = plt.subplots(figsize=(12, 6))
