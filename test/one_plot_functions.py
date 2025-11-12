@@ -24,6 +24,7 @@ def racepositions_plt(year , event , session_type):
         
     if not selected_drivers:
         st.warning("Please select at least one driver")
+        return
 
     else:
         # --- Lap selection slider ---
