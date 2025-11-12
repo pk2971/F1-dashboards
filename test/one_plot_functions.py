@@ -1,12 +1,10 @@
 import streamlit as st
 import fastf1
-import numpy as np
 import pandas as pd
+import altair as alt
 import streamlit as st
-import plotly.graph_objs as go
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
-from fastf1.plotting import get_team_color
 from one_data_loader import load_session_light , load_session_weather ,  load_session
 
 def racepositions_plt(year , event , session_type):
@@ -220,26 +218,37 @@ def tyre_strategies(year , event , session_type):
     st.pyplot(fig1)
 
 
-import altair as alt
-import pandas as pd
-
 def lap_time(year, event, session_type):
     session = load_session_light(year, event, session_type)
     session.load()
 
     drivers = [session.get_driver(drv)["Abbreviation"] for drv in session.drivers]
 
-    selected_drivers = st.multiselect(
-        "Choose Driver:", 
-        drivers, 
-        default=drivers[:3],
-        key="laptime"
-    )
+    with st.expander("Select Drivers: ", expanded=False):
+        cols = st.columns(4)
+        selected_drivers = []
+        for idx, driver in enumerate(drivers):
+            with cols[idx % 4]:
+                default_value = idx < 3
+                is_selected = st.checkbox(
+                    driver,
+                    value=default_value,
+                    key=f"driver_laptime_{driver}"
+                )
+                if is_selected:
+                    selected_drivers.append(driver)
+
+    # Selection summary
+    if selected_drivers:
+        st.caption(f"Comparing {len(selected_drivers)} driver(s): {', '.join(selected_drivers)}")
+    else:
+        st.warning("Please select at least one driver")
+        return
 
     # Prepare data
     data = []
     for driver in selected_drivers:
-        driver_laps = session.laps.pick_drivers(driver).reset_index()  # ALL laps now
+        driver_laps = session.laps.pick_drivers(driver).reset_index()
         
         if not driver_laps.empty:
             # Format as F1 timing string (1:23.456)
@@ -268,17 +277,42 @@ def lap_time(year, event, session_type):
     
     # Remove NaN lap times
     df = df.dropna(subset=['LapTimeSeconds'])
+    
+    if df.empty:
+        st.warning("No valid lap times found")
+        return
 
-    # Create Altair chart with full interactivity
-    chart = alt.Chart(df).mark_line(point=True, strokeWidth=2.5).encode(
+    # Create a summary dataframe with all drivers per lap
+    df_pivot = df.pivot_table(
+        index='LapNumber', 
+        columns='Driver', 
+        values='LapTimeFormatted',
+        aggfunc='first'
+    ).reset_index()
+    
+    # Merge back to get a combined tooltip
+    df = df.merge(df_pivot, on='LapNumber', how='left')
+
+    # Selection based on x-coordinate (lap number)
+    hover = alt.selection_point(
+        fields=['LapNumber'],
+        nearest=True,
+        on='mouseover',
+        empty=False,
+        clear='mouseout'
+    )
+
+    # Base line chart
+    lines = alt.Chart(df).mark_line(strokeWidth=2.5).encode(
         x=alt.X('LapNumber:Q', 
                 title='Lap Number', 
-                axis=alt.Axis(tickMinStep=5),  # Lap scale in range of 5
-                scale=alt.Scale(domain=[df['LapNumber'].min(), df['LapNumber'].max()])),
+                axis=alt.Axis(tickMinStep=5)),
         y=alt.Y('LapTimeSeconds:Q', 
                 title='Lap Time',
                 scale=alt.Scale(zero=False),
-                axis=alt.Axis(tickMinStep= 10 ,
+                axis=alt.Axis(
+                    tickMinStep=2,
+                    tickCount=8,
                     labelExpr="floor(datum.value / 60) + ':' + (datum.value % 60 < 10 ? '0' : '') + format(datum.value % 60, '.3f')"
                 )),
         color=alt.Color('Driver:N', 
@@ -286,13 +320,40 @@ def lap_time(year, event, session_type):
                            domain=df['Driver'].unique().tolist(),
                            range=df.groupby('Driver')['Color'].first().tolist()
                        ),
-                       legend=alt.Legend(title='Driver', orient='right')),
-        tooltip=[
-            alt.Tooltip('Driver:N', title='Driver'),
-            alt.Tooltip('LapNumber:Q', title='Lap'),
-            alt.Tooltip('LapTimeFormatted:N', title='Time')
-        ]
+                       legend=alt.Legend(title='Driver', orient='right'))
+    )
+
+    # Points that appear on hover
+    points = lines.mark_point(size=100, filled=True).encode(
+        opacity=alt.condition(hover, alt.value(1), alt.value(0))
+    )
+
+    # Vertical rule
+    rule = alt.Chart(df).mark_rule(color='gray', strokeWidth=1.5, strokeDash=[5, 5]).encode(
+        x='LapNumber:Q'
+    ).transform_filter(
+        hover
+    )
+
+    # Build tooltip fields dynamically for all drivers
+    tooltip_fields = [alt.Tooltip('LapNumber:Q', title='Lap')]
+    for driver in selected_drivers:
+        if driver in df.columns:
+            tooltip_fields.append(alt.Tooltip(f'{driver}:N', title=driver))
+
+    # Transparent selectors for better hover detection with combined tooltip
+    selectors = alt.Chart(df).mark_point(size=200, opacity=0).encode(
+        x='LapNumber:Q',
+        y='LapTimeSeconds:Q',
+        tooltip=tooltip_fields
+    ).add_params(hover)
+
+    # Combine layers
+    chart = alt.layer(
+        lines, points, rule, selectors
     ).properties(
+        width='container',
+        height=450,
         title={
             "text": "Lap Time Progression",
             "fontSize": 16,
@@ -306,10 +367,10 @@ def lap_time(year, event, session_type):
     ).configure_legend(
         labelFontSize=11,
         titleFontSize=12
-    ).interactive()  # This makes the entire plot interactive
+    ).interactive()
 
-    st.altair_chart(chart, width =True)
-
+    st.container()
+    st.altair_chart(chart, use_container_width=True, theme="streamlit")
 
 def telemetry_driver_comparison(year, event, session_type):
     fastf1.plotting.setup_mpl(color_scheme='fastf1')
