@@ -3,7 +3,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import matplotlib.units as munits
 munits.registry.clear()  # clear timple converter
-from one_plot_functions import racepositions_plt , tyre_strategies , lap_time , telemetry_driver_comparison
+from one_plot_functions import racepositions_plt , tyre_strategies , lap_time , telemetry_driver_comparison , tyre_degradation
 
 st.set_page_config(page_title="F1 Dashboard", layout="wide")
 
@@ -20,7 +20,7 @@ races= [
 ]
 event = st.sidebar.selectbox("Select Grand Prix", options=races, index=races.index("Australia"))
 session_type = st.sidebar.selectbox("Session Type", ["Race", "Qualifying"], index=0)
-tab1 , tab2 , tab3 , tab4= st.tabs(["Race Positions", "Tyre Strategies",  "Lap Time" , "Telemetry Comparison"])
+tab1 , tab2 , tab3 , tab4 , tab5 = st.tabs(["Race Positions", "Tyre Strategies",  "Lap Time" , "Telemetry Comparison" , "Tyre Degradation"])
 
 with tab1:
     st.subheader("Race Positions")
@@ -34,3 +34,6 @@ with tab3:
 with tab4:
     st.subheader("Telemetry Comparison")
     telemetry_driver_comparison(year , event , session_type)
+with tab5:
+    st.subheader("Tyre Degradation Analysis")
+    tyre_degradation(year , event , session_type)

@@ -258,8 +258,7 @@ def lap_time(year, event, session_type):
 def telemetry_driver_comparison(year, event, session_type):
     fastf1.plotting.setup_mpl(color_scheme='fastf1')
 
-    session = fastf1.get_session(year, event, session_type)
-    session.load()
+    session = load_session(year, event, session_type)
 
     drivers = [session.get_driver(drv)["Abbreviation"] for drv in session.drivers]
     laps = session.laps
@@ -294,8 +293,12 @@ def telemetry_driver_comparison(year, event, session_type):
     tyre_age_1 = int(lap_1["TyreLife"].iloc[0])
     tyre_age_2 = int(lap_2["TyreLife"].iloc[0])
 
-    st.write(f"Overview of {driver_1}: Stint number {stint_1}, {tyre_1} compound and {tyre_age_1} laps old")
-    st.write(f"Overview of {driver_2}: Stint number {stint_2}, {tyre_2} compound and {tyre_age_2} laps old")
+    st.markdown(f"#### {driver_1} Overview")
+    st.markdown(f"**🥇 Tyre Compound:** {tyre_1}  |  **🏁 Stint:** {stint_1}  |  **⏳ Tyre Age:** {tyre_age_1} laps")
+    st.markdown(f"#### {driver_2} Overview")
+    st.markdown(f"**🥈 Tyre Compound:** {tyre_2}  |  **🏁 Stint:** {stint_2}  |  **⏳ Tyre Age:** {tyre_age_2} laps")
+    st.divider()
+
 
 
     fig, (ax_speed, ax_brake, ax_throttle) = plt.subplots(3, 1, figsize=(12, 15), sharex=True)
@@ -329,3 +332,77 @@ def telemetry_driver_comparison(year, event, session_type):
     plt.tight_layout(rect=[0, 0, 1, 0.93])  # leave space for legend
     st.pyplot(fig)
     plt.close(fig)
+
+def tyre_degradation(year , event , session_type):
+    fastf1.plotting.setup_mpl(color_scheme='fastf1')
+
+    session = load_session(year, event, session_type)
+
+    drivers = [session.get_driver(drv)["Abbreviation"] for drv in session.drivers]
+    laps = session.laps
+    # --- Select driver ---
+    selected_driver =  st.selectbox("Select driver: ",
+                      drivers , 
+                      index = 0)
+    
+    driver_laps = laps.pick_drivers(selected_driver)
+    stint_numbers = (driver_laps['Stint'].unique()).astype(int)
+    selected_stint = st.selectbox(f"Select Stint for driver {selected_driver}",
+                                stint_numbers,
+                                 index = 0)
+    
+    stint_lap = driver_laps[driver_laps['Stint'] == selected_stint]
+
+    # --- Get min and max lap number of a stint
+    
+    min_lap_num = int(stint_lap['LapNumber'].min())
+    max_lap_num = int(stint_lap['LapNumber'].max())
+
+    compound = stint_lap['Compound'].iloc[0] 
+    st.markdown(f"**🛞 Tyre Compound:** {compound}  |  **Stint Start Lap:** {min_lap_num}  |  **Stint End Lap:** {max_lap_num}")
+
+    # --- Get telemetry data of the laps ---
+    min_lap = driver_laps[driver_laps['LapNumber'] == min_lap_num].iloc[0]
+    max_lap = driver_laps[driver_laps['LapNumber'] == max_lap_num].iloc[0]
+
+    tel_min = min_lap.get_telemetry()
+    tel_max = max_lap.get_telemetry()
+    
+    # --- Tyre degradation analysis plots ---
+
+    fig, (ax_speed, ax_brake, ax_throttle) = plt.subplots(3, 1, figsize=(12, 15), sharex=True)
+    
+    # Speed plot
+    ax_speed.plot(tel_min['Distance'], tel_min['Speed'], label= "Stint Start Lap", color='red')
+    ax_speed.plot(tel_max['Distance'], tel_max['Speed'], label="Stint End Lap" , color='blue')
+    ax_speed.set_ylabel("Speed (km/h)")
+    ax_speed.set_title(f"Speed Comparison: Stint {selected_stint}")
+    ax_speed.grid(True, alpha=0.3)
+
+    # Brake plot
+    ax_brake.plot(tel_min['Distance'], tel_min['Brake'],label= "Min Lap" , color='red')
+    ax_brake.plot(tel_max['Distance'], tel_max['Brake'], label="Max Lap", color='blue')
+    ax_brake.set_ylabel("Brake")
+    ax_brake.set_title(f"Brake Comparison: Stint {selected_stint}")
+    ax_brake.grid(True, alpha=0.3)
+
+    # Throttle plot
+    ax_throttle.plot(tel_min['Distance'], tel_min['Throttle'], label= "Min Lap" , color='red')
+    ax_throttle.plot(tel_max['Distance'], tel_max['Throttle'], label="Max Lap", color='blue')
+    ax_throttle.set_ylabel("Throttle")
+    ax_throttle.set_title(f"Throttle Comparison: Stint {selected_stint}")
+    ax_throttle.set_xlabel("Distance (m)")
+    ax_throttle.grid(True, alpha=0.3)
+
+    # Single shared legend on top or bottom
+    handles, labels = ax_speed.get_legend_handles_labels()
+    fig.legend(handles, labels, loc='upper center', ncol=2, bbox_to_anchor=(0.5, 0.95))
+
+    plt.tight_layout(rect=[0, 0, 1, 0.93])  # leave space for legend
+    st.pyplot(fig)
+    plt.close(fig)
+
+
+
+
+
