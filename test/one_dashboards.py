@@ -30,16 +30,16 @@ tab1 , tab2 , tab3 , tab4 , tab5 = st.tabs(["Race Positions", "Tyre Strategies",
 
 with tab1:
     st.subheader("Race Positions")
-    racepositions_plt(year , event , "Race" )
+    # racepositions_plt(year , event , "Race" )
 with tab2:
     st.subheader("Tyre Strategies")
-    tyre_strategies(year , event , "Race")
+    # tyre_strategies(year , event , "Race")
 with tab3:
     st.subheader("Lap Times")
     lap_time(year , event , "Race")
 with tab4:
     st.subheader("Telemetry Comparison")
-    telemetry_driver_comparison(year , event , "Race")
+    # telemetry_driver_comparison(year , event , "Race")
 with tab5:
     st.subheader("Tyre Degradation Analysis")
-    tyre_degradation(year , event , "Race")
+    # tyre_degradation(year , event , "Race")

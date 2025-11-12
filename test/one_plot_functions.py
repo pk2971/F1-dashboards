@@ -1,9 +1,12 @@
 import streamlit as st
 import fastf1
+import numpy as np
 import pandas as pd
 import streamlit as st
+import plotly.graph_objs as go
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
+from fastf1.plotting import get_team_color
 from one_data_loader import load_session_light , load_session_weather ,  load_session
 
 def racepositions_plt(year , event , session_type):
@@ -33,7 +36,7 @@ def racepositions_plt(year , event , session_type):
         selected_laps = st.select_slider(
             "Choose lap numbers:",
             options=list(range(min_lap, max_lap + 1)),
-            value=(min_lap, max_lap) , key= "race_position"
+            value=(min_lap, max_lap) , key= "race_position_laps"
         )
 
         # Filter laps for selected range
@@ -216,45 +219,97 @@ def tyre_strategies(year , event , session_type):
     plt.tight_layout()
     st.pyplot(fig1)
 
-def lap_time(year, event, session_type):
-    fastf1.plotting.setup_mpl(color_scheme='fastf1')
 
-    # Load session (make sure it’s fully loaded)
+import altair as alt
+import pandas as pd
+
+def lap_time(year, event, session_type):
     session = load_session_light(year, event, session_type)
     session.load()
 
-    # Extract driver abbreviations
     drivers = [session.get_driver(drv)["Abbreviation"] for drv in session.drivers]
 
     selected_drivers = st.multiselect(
-            "Choose Driver:", 
-            drivers, 
-            default=drivers[:3],
-            key="laptime"
-        )
+        "Choose Driver:", 
+        drivers, 
+        default=drivers[:3],
+        key="laptime"
+    )
 
-    fastf1.plotting.setup_mpl(color_scheme='fastf1')
-    fig, ax = plt.subplots(figsize=(12, 6))
-
+    # Prepare data
+    data = []
     for driver in selected_drivers:
-        driver_laps = session.laps.pick_drivers(driver).pick_quicklaps().reset_index()
-
+        driver_laps = session.laps.pick_drivers(driver).reset_index()  # ALL laps now
+        
         if not driver_laps.empty:
+            # Format as F1 timing string (1:23.456)
+            driver_laps['LapTimeFormatted'] = driver_laps['LapTime'].apply(
+                lambda x: f"{int(x.total_seconds() // 60)}:{x.total_seconds() % 60:06.3f}" if pd.notna(x) else "N/A"
+            )
+            # Keep seconds for plotting position
+            driver_laps['LapTimeSeconds'] = driver_laps['LapTime'].dt.total_seconds()
+            
+            # Get driver color
             style = fastf1.plotting.get_driver_style(
                 identifier=driver,
-                style=['color', 'linestyle'],
+                style=['color'],
                 session=session
             )
-            ax.plot(driver_laps['LapNumber'], driver_laps['LapTime'], **style, label=driver)
+            
+            driver_laps['Driver'] = driver
+            driver_laps['Color'] = style['color']
+            data.append(driver_laps[['LapNumber', 'LapTimeSeconds', 'LapTimeFormatted', 'Driver', 'Color']])
+    
+    if not data:
+        st.warning("No lap data available for selected drivers")
+        return
+    
+    df = pd.concat(data, ignore_index=True)
+    
+    # Remove NaN lap times
+    df = df.dropna(subset=['LapTimeSeconds'])
 
-    ax.set_xlabel("Lap Number", fontsize=12)
-    ax.set_ylabel("Lap Time", fontsize=12)
-    ax.set_title("Lap Time Progression", fontsize=14)
-    ax.legend(loc='best')
-    ax.grid(True, alpha=0.3)
+    # Create Altair chart with full interactivity
+    chart = alt.Chart(df).mark_line(point=True, strokeWidth=2.5).encode(
+        x=alt.X('LapNumber:Q', 
+                title='Lap Number', 
+                axis=alt.Axis(tickMinStep=5),  # Lap scale in range of 5
+                scale=alt.Scale(domain=[df['LapNumber'].min(), df['LapNumber'].max()])),
+        y=alt.Y('LapTimeSeconds:Q', 
+                title='Lap Time',
+                scale=alt.Scale(zero=False),
+                axis=alt.Axis(tickMinStep= 10 ,
+                    labelExpr="floor(datum.value / 60) + ':' + (datum.value % 60 < 10 ? '0' : '') + format(datum.value % 60, '.3f')"
+                )),
+        color=alt.Color('Driver:N', 
+                       scale=alt.Scale(
+                           domain=df['Driver'].unique().tolist(),
+                           range=df.groupby('Driver')['Color'].first().tolist()
+                       ),
+                       legend=alt.Legend(title='Driver', orient='right')),
+        tooltip=[
+            alt.Tooltip('Driver:N', title='Driver'),
+            alt.Tooltip('LapNumber:Q', title='Lap'),
+            alt.Tooltip('LapTimeFormatted:N', title='Time')
+        ]
+    ).properties(
+        title={
+            "text": "Lap Time Progression",
+            "fontSize": 16,
+            "font": "Arial",
+            "fontWeight": "bold"
+        }
+    ).configure_axis(
+        labelFontSize=11,
+        titleFontSize=13,
+        gridOpacity=0.3
+    ).configure_legend(
+        labelFontSize=11,
+        titleFontSize=12
+    ).interactive()  # This makes the entire plot interactive
 
-    plt.tight_layout()
-    st.pyplot(fig)
+    st.altair_chart(chart, width =True)
+
 
 def telemetry_driver_comparison(year, event, session_type):
     fastf1.plotting.setup_mpl(color_scheme='fastf1')
