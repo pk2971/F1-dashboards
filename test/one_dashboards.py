@@ -26,20 +26,24 @@ display_names = [event for event in events]
 event = st.sidebar.selectbox("Select Grand Prix", options=display_names, index = 0)
 
 # session_type = st.sidebar.selectbox("Session Type", ["Race", "Qualifying"], index=0)
-tab1 , tab2 , tab3 , tab4 , tab5 = st.tabs(["Race Positions", "Tyre Strategies",  "Lap Time" , "Telemetry Comparison" , "Tyre Degradation"])
+tab1 , tab2 , tab3 , tab4 , tab5 , tab6 = st.tabs(["Race Overview","Race Positions", "Tyre Strategies",  "Lap Time" , "Telemetry Comparison" , "Tyre Degradation" ])
 
 with tab1:
-    st.subheader("Race Positions")
-    # racepositions_plt(year , event , "Race" )
+    st.subheader("Race Overview")
+    race_overview(year , event , "Race")
 with tab2:
-    st.subheader("Tyre Strategies")
-    # tyre_strategies(year , event , "Race")
+    st.subheader("Race Positions")
+    racepositions_plt(year , event , "Race" )
 with tab3:
+    st.subheader("Tyre Strategies")
+    tyre_strategies(year , event , "Race")
+with tab4:
     st.subheader("Lap Times")
     lap_time(year , event , "Race")
-with tab4:
-    st.subheader("Telemetry Comparison")
-    # telemetry_driver_comparison(year , event , "Race")
 with tab5:
+    st.subheader("Telemetry Comparison")
+    telemetry_driver_comparison(year , event , "Race")
+with tab6:
     st.subheader("Tyre Degradation Analysis")
-    # tyre_degradation(year , event , "Race")
+    tyre_degradation(year , event , "Race")
+

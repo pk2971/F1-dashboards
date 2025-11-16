@@ -111,12 +111,6 @@ def tyre_strategies(session, selected_drivers, laps, year, event):
     """
     Plot tyre strategies (stints) for selected drivers and laps.
     """
-    import fastf1
-    import pandas as pd
-    import streamlit as st
-    import matplotlib.pyplot as plt
-    from matplotlib.patches import Patch
-
     fastf1.plotting.setup_mpl(color_scheme='fastf1')
 
     # --- Lap selection slider ---

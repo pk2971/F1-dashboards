@@ -4,121 +4,436 @@ import pandas as pd
 import altair as alt
 import streamlit as st
 import matplotlib.pyplot as plt
+import plotly.graph_objs as go
 from matplotlib.patches import Patch
 from one_data_loader import load_session_light , load_session_weather ,  load_session
 
-def racepositions_plt(year , event , session_type):
-    """
-    Plot race positions and track status for selected drivers with lap selection.
-    """
+def race_overview(year, event, session_type):
+    fastf1.plotting.setup_mpl(color_scheme='fastf1')
+
+    # --- Light session load ---
+    session = load_session_light(year, event, session_type)
+    laps = session.laps
+
+    # --- Get race results from laps (final lap of each driver) ---
+    final_laps = laps.groupby('Driver').last().reset_index()
+    results = final_laps.sort_values('Position')  # Ensure P1, P2, P3 order
+
+    # P1, P2, P3
+    p1 = results.iloc[0]
+    p2 = results.iloc[1]
+    p3 = results.iloc[2]
+
+    # Get full names - p1['Driver'] contains abbreviation, use it to get full name
+    p1_abbr = p1['Driver']
+    p2_abbr = p2['Driver']
+    p3_abbr = p3['Driver']
+    
+    p1_full_name = session.get_driver(p1_abbr)['FullName']
+    p2_full_name = session.get_driver(p2_abbr)['FullName']
+    p3_full_name = session.get_driver(p3_abbr)['FullName']
+
+    # Times - Format as HH:MM:SS.mmm
+    def format_time(time_delta):
+        if pd.isna(time_delta):
+            return "N/A"
+        total_seconds = time_delta.total_seconds()
+        hours = int(total_seconds // 3600)
+        minutes = int((total_seconds % 3600) // 60)
+        seconds = total_seconds % 60
+        return f"{hours:02d}:{minutes:02d}:{seconds:06.3f}"
+    
+    def format_delta(time_delta):
+        if pd.isna(time_delta):
+            return "N/A"
+        total_seconds = time_delta.total_seconds()
+        return f"+{total_seconds:.3f}s"
+
+    p1_time = p1['Time']
+    p2_delta = p2['Time'] - p1_time
+    p3_delta = p3['Time'] - p1_time
+
+    p1_time_str = format_time(p1_time)
+    p2_delta_str = format_delta(p2_delta)
+    p3_delta_str = format_delta(p3_delta)
+
+    # Team colors
+    p1_color = fastf1.plotting.get_team_color(p1['Team'], session=session)
+    p2_color = fastf1.plotting.get_team_color(p2['Team'], session=session)
+    p3_color = fastf1.plotting.get_team_color(p3['Team'], session=session)
+
+    # Race caption
+    st.markdown(f"### {session.event['EventName']} - {session.event['EventDate'].strftime('%Y-%m-%d')}")
+    
+    # --- Three equal columns for podium boxes ---
+    col1, col2, col3 = st.columns(3)
+
+    # P2 - left
+    with col1:
+        st.markdown(
+            f"""
+            <div style='background-color:{p2_color};padding:40px;border-radius:15px;text-align:center;height:250px;display:flex;flex-direction:column;justify-content:center;border:3px solid white;'>
+                <div style='font-size:32px;font-weight:bold;color:white;margin-bottom:10px;'>P2</div>
+                <div style='font-size:24px;font-weight:bold;color:white;margin-bottom:8px;'>{p2_full_name}</div>
+                <div style='font-size:16px;color:white;opacity:0.9;margin-bottom:8px;'>{p2['Team']}</div>
+                <div style='font-size:20px;font-weight:bold;color:white;'>{p2_delta_str}</div>
+            </div>
+            """, 
+            unsafe_allow_html=True
+        )
+
+    # P1 - center
+    with col2:
+        st.markdown(
+            f"""
+            <div style='background-color:{p1_color};padding:40px;border-radius:15px;text-align:center;height:250px;display:flex;flex-direction:column;justify-content:center;border:3px solid white;'>
+                <div style='font-size:32px;font-weight:bold;color:white;margin-bottom:10px;'>P1</div>
+                <div style='font-size:24px;font-weight:bold;color:white;margin-bottom:8px;'>{p1_full_name}</div>
+                <div style='font-size:16px;color:white;opacity:0.9;margin-bottom:8px;'>{p1['Team']}</div>
+                <div style='font-size:20px;font-weight:bold;color:white;'>{p1_time_str}</div>
+            </div>
+            """, 
+            unsafe_allow_html=True
+        )
+
+    # P3 - right
+    with col3:
+        st.markdown(
+            f"""
+            <div style='background-color:{p3_color};padding:40px;border-radius:15px;text-align:center;height:250px;display:flex;flex-direction:column;justify-content:center;border:3px solid white;'>
+                <div style='font-size:32px;font-weight:bold;color:white;margin-bottom:10px;'>P3</div>
+                <div style='font-size:24px;font-weight:bold;color:white;margin-bottom:8px;'>{p3_full_name}</div>
+                <div style='font-size:16px;color:white;opacity:0.9;margin-bottom:8px;'>{p3['Team']}</div>
+                <div style='font-size:20px;font-weight:bold;color:white;'>{p3_delta_str}</div>
+            </div>
+            """, 
+            unsafe_allow_html=True
+        )
+    
+    # --- Additional Stats: Pole Position and Fastest Lap ---
+    st.markdown("---")
+    
+    # Get pole position (P1 in qualifying)
+    try:
+        quali_session = load_session_light(year, event, 'Q')
+        quali_results = quali_session.results.sort_values('Position')
+        pole_driver = quali_results.iloc[0]
+        pole_driver_full_name = quali_session.get_driver(pole_driver['Abbreviation'])['FullName']
+        pole_time = format_time(pole_driver['Q3']) if pd.notna(pole_driver.get('Q3')) else format_time(pole_driver.get('Q2', pole_driver.get('Q1')))
+        pole_color = fastf1.plotting.get_team_color(pole_driver['TeamName'], session=quali_session)
+    except:
+        pole_driver_full_name = "N/A"
+        pole_time = "N/A"
+        pole_color = "#888888"
+    
+    # Get fastest lap
+    fastest_lap = laps.loc[laps['LapTime'].idxmin()]
+    fastest_driver_abbr = fastest_lap['Driver']
+    fastest_driver_full_name = session.get_driver(fastest_driver_abbr)['FullName']
+    fastest_time = format_time(fastest_lap['LapTime'])
+    fastest_lap_num = int(fastest_lap['LapNumber'])
+    fastest_color = fastf1.plotting.get_team_color(fastest_lap['Team'], session=session)
+    
+    # Two columns for pole and fastest lap
+    stat_col1, stat_col2 = st.columns(2)
+    
+    with stat_col1:
+        st.markdown(
+            f"""
+            <div style='background:linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.5));padding:25px;border-radius:12px;border-left:5px solid {pole_color};min-height:140px;'>
+                <div style='font-size:14px;color:#aaa;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;'>🏁 Pole Position</div>
+                <div style='font-size:28px;font-weight:bold;color:white;margin-bottom:5px;'>{pole_driver_full_name}</div>
+                <div style='font-size:18px;color:{pole_color};font-weight:bold;'>{pole_time}</div>
+                <div style='font-size:14px;color:#999;margin-top:5px;visibility:hidden;'>Spacer</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    
+    with stat_col2:
+        st.markdown(
+            f"""
+            <div style='background:linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.5));padding:25px;border-radius:12px;border-left:5px solid {fastest_color};min-height:140px;'>
+                <div style='font-size:14px;color:#aaa;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;'>⚡ Fastest Lap</div>
+                <div style='font-size:28px;font-weight:bold;color:white;margin-bottom:5px;'>{fastest_driver_full_name}</div>
+                <div style='font-size:18px;color:{fastest_color};font-weight:bold;'>{fastest_time}</div>
+                <div style='font-size:14px;color:#999;margin-top:5px;'>Lap {fastest_lap_num}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    
+    # --- Full Race Results Grid (P1-P20) ---
+    st.markdown("---")
+    st.markdown("### Race Results")
+    
+    # Create results data with formatted times
+    results_data = []
+    
+    # First, add all finishers (with valid positions)
+    finishers = results[results['Position'].notna()].sort_values('Position').reset_index(drop=True)
+    winner_time = finishers.iloc[0]['Time'] if len(finishers) > 0 else None
+    
+    for idx, row in finishers.iterrows():
+        position = int(row['Position'])
+        driver_abbr = row['Driver']
+        driver_full_name = session.get_driver(driver_abbr)['FullName']
+        team = row['Team']
+        
+        if position == 1:
+            time_str = format_time(row['Time'])
+        else:
+            # Check if time is valid
+            if pd.notna(row['Time']) and pd.notna(winner_time):
+                delta = row['Time'] - winner_time
+                time_str = format_delta(delta)
+            else:
+                time_str = "DNF"
+        
+        results_data.append({
+            'Position': position,
+            'Driver': driver_full_name,
+            'Team': team,
+            'Time': time_str
+        })
+    
+    # Add DNF drivers (those with NaN positions)
+    dnf_drivers = results[results['Position'].isna()]
+    for idx, row in dnf_drivers.iterrows():
+        driver_abbr = row['Driver']
+        driver_full_name = session.get_driver(driver_abbr)['FullName']
+        team = row['Team']
+        
+        results_data.append({
+            'Position': 'DNF',
+            'Driver': driver_full_name,
+            'Team': team,
+            'Time': 'DNF'
+        })
+    
+    results_df = pd.DataFrame(results_data)
+    
+    # Display as a simple styled table
+    st.dataframe(
+        results_df,
+        hide_index=True,
+        use_container_width=True,
+        height=600
+    )
+
+def racepositions_plt(year, event, session_type):
     fastf1.plotting.setup_mpl(color_scheme='fastf1')
     session = load_session_light(year, event, session_type)
     drivers = session.drivers
+    laps = session.laps
     drivers = [session.get_driver(drv)["Abbreviation"] for drv in drivers]
-    selected_drivers = st.multiselect(
-            "Choose Driver:", 
-            drivers, 
-            default=drivers,
-            key="race_positions"
-        )
-    
-        
+
+    # --- DRIVER SELECTION ---
+    with st.expander("Select Drivers:", expanded=False):
+        cols = st.columns(4)
+        selected_drivers = []
+        for idx, driver in enumerate(drivers):
+            with cols[idx % 4]:
+                is_selected = st.checkbox(
+                    driver,
+                    value=True,
+                    key=f"race_position_{driver}"
+                )
+                if is_selected:
+                    selected_drivers.append(driver)
+
     if not selected_drivers:
         st.warning("Please select at least one driver")
         return
 
-    else:
-        # --- Lap selection slider ---
-        min_lap = int(session.laps['LapNumber'].min())
-        max_lap = int(session.laps['LapNumber'].max())
-        selected_laps = st.select_slider(
-            "Choose lap numbers:",
-            options=list(range(min_lap, max_lap + 1)),
-            value=(min_lap, max_lap) , key= "race_position_laps"
+    # --- LAP SELECTION ---
+    min_lap = int(laps['LapNumber'].min())
+    max_lap = int(laps['LapNumber'].max())
+    selected_laps = st.select_slider(
+        "Choose lap range:",
+        options=list(range(min_lap, max_lap + 1)),
+        value=(min_lap, max_lap),
+        key="racepositions_laps"
+    )
+
+    laps_filtered = laps[
+        (laps['LapNumber'] >= selected_laps[0]) &
+        (laps['LapNumber'] <= selected_laps[1])
+    ].copy()
+
+    laps_filtered_selected = laps_filtered[laps_filtered['Driver'].isin(selected_drivers)].copy()
+    if laps_filtered_selected.empty:
+        st.warning("No data for selected drivers and lap range")
+        return
+
+    # --- DRIVER COLORS & DASHES ---
+    driver_colors = {}
+    driver_teams = {}
+    for drv in selected_drivers:
+        drv_laps = laps_filtered_selected[laps_filtered_selected['Driver'] == drv]
+        if len(drv_laps) == 0:
+            continue
+        abb = drv_laps['Driver'].iloc[0]
+        team = drv_laps['Team'].iloc[0]
+        style = fastf1.plotting.get_driver_style(identifier=abb, style=['color'], session=session)
+        driver_colors[drv] = style['color']
+        driver_teams[drv] = team
+
+    # Dash: first driver per team solid, second dashed
+    team_driver_count = {}
+    driver_dashes = {}
+    for drv, team in driver_teams.items():
+        team_driver_count[team] = team_driver_count.get(team, 0) + 1
+        driver_dashes[drv] = [0] if team_driver_count[team] == 1 else [5,5]
+
+    # --- DYNAMIC Y-AXIS ---
+    min_pos = laps_filtered_selected['Position'].min()
+    max_pos = laps_filtered_selected['Position'].max()
+
+    # --- MAIN CHART WITH INDIVIDUAL TOOLTIP ---
+    chart = alt.Chart(laps_filtered_selected).mark_line(strokeWidth=3).encode(
+        x=alt.X('LapNumber:O',
+                title='Lap Number',
+                axis=alt.Axis(values=list(laps_filtered_selected['LapNumber'].unique()),
+                              tickMinStep=1,
+                              labelAngle=0,
+                              grid=False)),
+        y=alt.Y('Position:Q',
+                title='Position',
+                scale=alt.Scale(domain=[max_pos, min_pos]),
+                axis=alt.Axis(grid=False)),
+        color=alt.Color('Driver:N', scale=alt.Scale(domain=list(driver_colors.keys()),
+                                                    range=list(driver_colors.values())),legend=alt.Legend()),
+        strokeDash=alt.StrokeDash('Driver:N', scale=alt.Scale(domain=list(driver_dashes.keys()),
+                                                              range=list(driver_dashes.values()))),
+        tooltip=[
+            alt.Tooltip('LapNumber:Q', title='Lap'),
+            alt.Tooltip('Position:Q', title='Position'),
+            alt.Tooltip('Driver:N', title='Driver'),
+            alt.Tooltip('Team:N', title='Team')
+        ]
+    )
+    points = alt.Chart(laps_filtered_selected).mark_point(
+    size=25,        
+    filled=True,
+    opacity=0.3,   
+    strokeWidth=0
+            ).encode(
+                x='LapNumber:O',
+                y='Position:Q',
+                color=alt.Color('Driver:N', scale=alt.Scale(domain=list(driver_colors.keys()),
+                                                            range=list(driver_colors.values())),
+                                legend=None),
+                strokeDash=alt.StrokeDash('Driver:N', scale=alt.Scale(domain=list(driver_dashes.keys()),
+                                                                        range=list(driver_dashes.values())),legend=None),
+                tooltip=[
+                    alt.Tooltip('LapNumber:Q', title='Lap'),
+                    alt.Tooltip('Position:Q', title='Position'),
+                    alt.Tooltip('Driver:N', title='Driver'),
+                    alt.Tooltip('Team:N', title='Team')
+                ]
+            )
+    # --- TRACK STATUS COLORS ---
+    status_colors = {
+        "4": "#FFFF00AA",   # Safety Car → yellow 
+        "5": "#FF0000AA",   # Red flag
+        "6": "#FFA500AA"    # VSC -> orange
+    }
+
+    status_labels = {
+        "4": "Safety Car",
+        "5": "Red Flag",
+        "6": "VSC"
+    }
+
+    # Filter ts_df to match selected lap range
+    ts_df = laps[['LapNumber', 'TrackStatus']].copy()
+    ts_df = ts_df[
+        (ts_df['LapNumber'] >= selected_laps[0]) &
+        (ts_df['LapNumber'] <= selected_laps[1])
+    ].copy()
+    ts_df['TrackStatus'] = ts_df['TrackStatus'].fillna('1').astype(str)
+    ts_df['LapNumber_plus1'] = ts_df['LapNumber'] + 1
+
+    # Filter out normal track status
+    ts_df = ts_df[ts_df['TrackStatus'] != '1'].copy()
+
+    # Add label column for legend
+    ts_df['TrackStatusLabel'] = ts_df['TrackStatus'].map(status_labels)
+
+    # Get only the statuses that exist in your filtered data
+    existing_statuses = ts_df['TrackStatus'].unique()
+    domain = [status_labels[s] for s in existing_statuses if s in status_labels]
+    range_colors = [status_colors[s] for s in existing_statuses if s in status_colors]
+
+    # --- BACKGROUND RECTANGLES ---
+    background = (
+        alt.Chart(ts_df)
+        .mark_rect(opacity=0.03, tooltip=None)  # Slightly higher opacity for visibility
+        .encode(
+            x=alt.X('LapNumber:O'),
+            x2='LapNumber_plus1:O',
+            y=alt.value(0),
+            y2=alt.value('height'),
+            color=alt.Color('TrackStatusLabel:N',
+                        scale=alt.Scale(domain=domain, range=range_colors),
+                        legend=alt.Legend(title="Track Status", orient="top",symbolOpacity=1))
         )
+    )
 
-        # Filter laps for selected range
-        laps_filtered = session.laps[
-            (session.laps['LapNumber'] >= selected_laps[0]) &
-            (session.laps['LapNumber'] <= selected_laps[1])
-        ].copy()
+    final_chart = (background + chart + points).properties(
+        width = 1200,
+        height = 500
+    ).resolve_scale(
+        color='independent',
+        strokeDash='independent'
+    ).resolve_legend(
+        color='independent'
+    ).resolve_axis(
+        x='shared',
+        y='shared'
+    )
+    st.altair_chart(final_chart, use_container_width=True)
 
-        fig, ax = plt.subplots(figsize=(20, 11))
-
-        # Track status flags
-        flag_legend_added = {'red': False, 'yellow': False, 'orange': False}
-
-        for lap_num in laps_filtered['LapNumber'].unique():
-            lap_data = laps_filtered[laps_filtered['LapNumber'] == lap_num].iloc[0]
-
-            if 'TrackStatus' in lap_data and pd.notna(lap_data['TrackStatus']):
-                track_status = str(lap_data['TrackStatus'])
-
-                if '5' in track_status:
-                    label = 'Red Flag' if not flag_legend_added['red'] else None
-                    ax.axvspan(lap_num - 0.5, lap_num + 0.5, color='red', alpha=0.2, label=label)
-                    flag_legend_added['red'] = True
-                elif '4' in track_status:
-                    label = 'Safety Car' if not flag_legend_added['yellow'] else None
-                    ax.axvspan(lap_num - 0.5, lap_num + 0.5, color='yellow', alpha=0.3, label=label)
-                    flag_legend_added['yellow'] = True
-                elif '6' in track_status:
-                    label = 'VSC' if not flag_legend_added['orange'] else None
-                    ax.axvspan(lap_num - 0.5, lap_num + 0.5, color='orange', alpha=0.2, label=label)
-                    flag_legend_added['orange'] = True
-
-        # Plot driver positions
-        for drv in selected_drivers:
-            drv_laps = laps_filtered.pick_drivers(drv)
-            if len(drv_laps) == 0:
-                continue
-            abb = drv_laps['Driver'].iloc[0]
-            style = fastf1.plotting.get_driver_style(identifier=abb, style=['color', 'linestyle'], session=session)
-            ax.plot(drv_laps['LapNumber'], drv_laps['Position'], label=abb, **style)
-
-        # y-axis (positions for selected drivers only)
-        all_positions = []
-        for drv in selected_drivers:
-            drv_laps = laps_filtered.pick_drivers(drv)
-            if len(drv_laps) > 0:
-                all_positions.extend(drv_laps['Position'].tolist())
-
-        if all_positions:
-            min_pos = min(all_positions)
-            max_pos = max(all_positions)
-        else:
-            min_pos, max_pos = 1, len(session.drivers)
-
-        ax.set_ylim([max_pos + 0.5, min_pos - 0.5])
-        ax.set_yticks(range(int(min_pos), int(max_pos) + 1))
-
-        # x-axis (laps)
-        ax.set_xlim(selected_laps[0] - 0.5, selected_laps[1] + 0.5)
-        ax.set_xticks(range(selected_laps[0], selected_laps[1] + 1))
-
-        ax.set_xlabel('Lap', fontsize=12)
-        ax.set_ylabel('Position', fontsize=12)
-        ax.set_title('Race Position Changes', fontsize=14)
-        ax.grid(True, alpha=0.3)
-
-        ax.legend(bbox_to_anchor=(1.0, 1.02), loc='upper left', framealpha=0.9)
-
-        plt.tight_layout()
-        st.pyplot(fig)
-
-def tyre_strategies(year , event , session_type):
+def tyre_strategies(year, event, session_type):
     fastf1.plotting.setup_mpl(color_scheme='fastf1')
     session = load_session_weather(year, event, session_type)
+    
+    # --- Drivers and laps ---
     drivers = session.drivers
     laps = session.laps
-    drivers = [session.get_driver(drv)["Abbreviation"] for drv in drivers]
-    selected_drivers = st.multiselect(
-            "Choose Driver:", 
-            drivers, 
-            default=drivers,
-            key="tyre_strat_driver"
-        )
     
+    # Sort drivers by their final race position
+    driver_info = []
+    for drv in drivers:
+        abbr = session.get_driver(drv)["Abbreviation"]
+        driver_laps = laps[laps['Driver'] == abbr]
+        if not driver_laps.empty:
+            final_position = driver_laps.iloc[-1]['Position']
+            driver_info.append((abbr, final_position))
+    
+    # Sort by position (handle NaN values by putting them at the end)
+    driver_info.sort(key=lambda x: (pd.isna(x[1]), x[1] if pd.notna(x[1]) else float('inf')))
+    drivers = [d[0] for d in driver_info]
+
+    # --- DRIVER SELECTION ---
+    with st.expander("Select Drivers:", expanded=False):
+        cols = st.columns(4)
+        selected_drivers = []
+        for idx, driver in enumerate(drivers):
+            with cols[idx % 4]:
+                is_selected = st.checkbox(
+                    driver,
+                    value=True,
+                    key=f"race_position1_{driver}"
+                )
+                if is_selected:
+                    selected_drivers.append(driver)
+
+    if not selected_drivers:
+        st.warning("Please select at least one driver")
+        return
+
     # --- Lap selection slider ---
     min_lap = int(laps['LapNumber'].min())
     max_lap = int(laps['LapNumber'].max())
@@ -129,101 +444,142 @@ def tyre_strategies(year , event , session_type):
         key="tyre_strat_laps"
     )
 
-    # Filter laps for selected drivers and lap range
+    # --- Filter laps for selected drivers and lap range ---
     driver_laps = laps[
         (laps['Driver'].isin(selected_drivers)) &
         (laps['LapNumber'] >= selected_laps[0]) &
         (laps['LapNumber'] <= selected_laps[1])
     ].copy()
 
-    if len(driver_laps) == 0:
+    if driver_laps.empty:
         st.warning("No data available for the selected filters")
         return
-
-    # --- Weather join ---
-    weather_data = session.laps.get_weather_data()
-    laps_reset = laps.reset_index(drop=True)
-    weather_reset = weather_data.reset_index(drop=True)
-    joined = pd.concat([laps_reset, weather_reset.loc[:, ~(weather_reset.columns == 'Time')]], axis=1)
-    joined_filtered = joined[
-        (joined['LapNumber'] >= selected_laps[0]) &
-        (joined['LapNumber'] <= selected_laps[1])
-    ]
 
     # --- Build stints summary ---
     stints = driver_laps.groupby(["Driver", "Stint", "Compound"]).size().reset_index(name='StintLength')
 
-    fig1, ax1 = plt.subplots(figsize=(15, max(4, len(selected_drivers) * 0.6)))
-
-    # Map driver names to numeric y positions
-    driver_positions = {drv: i for i, drv in enumerate(selected_drivers)}
-
-    # --- Plot each driver's stints ---
+    # --- Compute x_start and x_end safely ---
+    stints_sorted = pd.DataFrame()
+    drivers_with_data = []  # Track drivers that actually have stint data
     for driver in selected_drivers:
-        driver_stints = stints[stints["Driver"] == driver].sort_values("Stint")
-        previous_stint_end = selected_laps[0] - 1
+        driver_stints = stints[stints['Driver'] == driver].sort_values("Stint").copy()
+        if driver_stints.empty:
+            continue
+        drivers_with_data.append(driver)
+        cumsum = driver_stints['StintLength'].cumsum()
+        x_start = [selected_laps[0]] + list(selected_laps[0] + cumsum[:-1])
+        driver_stints['x_start'] = x_start
+        driver_stints['x_end'] = driver_stints['x_start'] + driver_stints['StintLength']
+        stints_sorted = pd.concat([stints_sorted, driver_stints])
+    stints = stints_sorted
+    
+    # Convert Driver column to categorical to preserve order
+    stints['Driver'] = pd.Categorical(stints['Driver'], categories=drivers_with_data, ordered=True)
 
-        for _, row in driver_stints.iterrows():
-            compound_color = fastf1.plotting.get_compound_color(row["Compound"], session=session)
-            ax1.barh(
-                y=driver_positions[driver],
-                width=row["StintLength"],
-                left=previous_stint_end,
-                color=compound_color,
-                edgecolor="black",
-                linewidth=1.5
-            )
-            previous_stint_end += row["StintLength"]
+    if stints.empty:
+        st.warning("No stint data to plot")
+        return
 
-    # --- Rain overlay ---
-    if "Rainfall" in joined_filtered.columns:
-        for _, row in joined_filtered.iterrows():
-            if row.get('Rainfall', False):
-                ax1.axvspan(row['LapNumber'] - 0.5, row['LapNumber'] + 0.5, color='skyblue', alpha=0.3, zorder=0)
+    # Define shared y-axis encoding
+    y_encoding = alt.Y('Driver:N',
+                       sort=drivers_with_data,
+                       title='Driver',
+                       axis=alt.Axis(labelAngle=0))
 
-    # --- Configure axes ---
-    ax1.set_title(f"{year} {event} Grand Prix - Tyre Strategies", fontsize=14, fontweight='bold')
-    ax1.set_xlabel("Lap Number", fontsize=12)
-    ax1.set_ylabel("Driver", fontsize=12)
-    ax1.set_xlim(selected_laps[0] - 1, selected_laps[1] + 1)
+    # --- Tyre strategy chart ---
+    tyre_chart = alt.Chart(stints).mark_bar().encode(
+        x=alt.X('x_start:Q',
+                axis=alt.Axis(tickMinStep=1, title='Lap Number'),
+                scale=alt.Scale(domain=[selected_laps[0], selected_laps[1] + 1])),
+        x2='x_end:Q',
+        y=y_encoding,
+        color=alt.Color('Compound:N',
+                        scale=alt.Scale(
+                            domain=stints['Compound'].unique(),
+                            range=[fastf1.plotting.get_compound_color(comp, session=session)
+                                   for comp in stints['Compound'].unique()]
+                        ),
+                        legend=alt.Legend(title='Tyre Compound')),
+        opacity=alt.value(0.8),
+        tooltip=[
+            alt.Tooltip('Driver:N', title='Driver'),
+            alt.Tooltip('x_start:Q', title='Stint Start Lap'),
+            alt.Tooltip('x_end:Q', title='Stint End Lap'),
+            alt.Tooltip('Compound:N', title='Compound')
+        ]
+    ).properties(
+        width=1000,
+        height=max(300, len(drivers_with_data) * 40),
+        title=f"{year} {event} Grand Prix - Tyre Strategies"
+    )
 
-    # Label y-axis with driver abbreviations
-    ax1.set_yticks(list(driver_positions.values()))
-    ax1.set_yticklabels(list(driver_positions.keys()))
-    ax1.invert_yaxis()  # top driver first
+    # --- Rainfall overlay ---
+    weather_data = session.laps.get_weather_data().reset_index(drop=True)
 
-    # Show all lap numbers on x-axis
-    ax1.set_xticks(range(selected_laps[0], selected_laps[1] + 1))
-    ax1.set_xticklabels(range(selected_laps[0], selected_laps[1] + 1), rotation=90)
+    # Rename Time column to avoid duplicate
+    if 'Time' in weather_data.columns:
+        weather_data = weather_data.rename(columns={'Time': 'WeatherTime'})
 
-    ax1.grid(axis='x', linestyle='-', alpha=0.3)
-    for spine in ['top', 'right', 'left']:
-        ax1.spines[spine].set_visible(False)
+    joined_filtered = pd.concat([laps.reset_index(drop=True), weather_data], axis=1)
 
-    # --- Legend (tyre compounds + rain) ---
-    compounds_used = stints['Compound'].unique()
-    compound_patches = [
-        Patch(facecolor=fastf1.plotting.get_compound_color(comp, session=session),
-              edgecolor='black', label=comp)
-        for comp in compounds_used
-    ]
-
-    legend_elements = compound_patches
     if "Rainfall" in joined_filtered.columns and joined_filtered['Rainfall'].any():
-        legend_elements += [Patch(facecolor='skyblue', alpha=0.3, label='Rain')]
+        # Get rainfall laps (independent of driver filtering)
+        rain = joined_filtered[
+            (joined_filtered['Rainfall'] > 0) & 
+            (joined_filtered['LapNumber'] >= selected_laps[0]) & 
+            (joined_filtered['LapNumber'] <= selected_laps[1])
+        ][['LapNumber']].drop_duplicates().copy()
+        
+        if not rain.empty:
+            rain['LapEnd'] = rain['LapNumber'] + 1
+            
+            # Create list of all drivers for the y-axis span
+            # Add padding drivers to extend rain bars above and below
+            extended_drivers = ['_top_padding'] + drivers_with_data + ['_bottom_padding']
+            rain['Driver'] = [extended_drivers] * len(rain)
+            rain_expanded = rain.explode('Driver')
 
-    ax1.legend(handles=legend_elements, loc='lower right', title='Tyre Compounds & Conditions')
+            rain_chart = alt.Chart(rain_expanded).mark_rect(opacity=0.25).encode(
+                x=alt.X('LapNumber:Q', 
+                        title='Lap Number',
+                        scale=alt.Scale(domain=[selected_laps[0], selected_laps[1] + 1])),
+                x2='LapEnd:Q',
+                y=alt.Y('Driver:N', 
+                        sort=extended_drivers,
+                        title='Driver',
+                        axis=alt.Axis(labelAngle=0)),
+                tooltip=[alt.Tooltip('LapNumber:Q', title='Rainfall Lap')],
+                color=alt.value('lightblue')
+            )
 
-    plt.tight_layout()
-    st.pyplot(fig1)
+            # --- Layer charts (rain FIRST so it's behind) ---
+            final_chart = alt.layer(
+                rain_chart,
+                tyre_chart
+            ).resolve_scale(
+                color='independent',
+                x='shared'  # Force shared x-axis scale
+            )
+        else:
+            final_chart = tyre_chart
+    else:
+        final_chart = tyre_chart
 
+    # --- Apply final configuration after layering ---
+    final_chart = final_chart.configure_axis(
+        grid=True
+    ).configure_title(
+        fontSize=16,
+        anchor='start'
+    )
+
+    st.altair_chart(final_chart, use_container_width=True)
 
 def lap_time(year, event, session_type):
     session = load_session_light(year, event, session_type)
-    session.load()
-
     drivers = [session.get_driver(drv)["Abbreviation"] for drv in session.drivers]
 
+    # --- Driver selection ---
     with st.expander("Select Drivers: ", expanded=False):
         cols = st.columns(4)
         selected_drivers = []
@@ -238,62 +594,51 @@ def lap_time(year, event, session_type):
                 if is_selected:
                     selected_drivers.append(driver)
 
-    # Selection summary
-    if selected_drivers:
-        st.caption(f"Comparing {len(selected_drivers)} driver(s): {', '.join(selected_drivers)}")
-    else:
+    if not selected_drivers:
         st.warning("Please select at least one driver")
         return
+    st.caption(f"Comparing {len(selected_drivers)} driver(s): {', '.join(selected_drivers)}")
 
-    # Prepare data
-    data = []
+    # --- Prepare full lap range ---
+    max_lap_number = int(session.laps['LapNumber'].max())
+    all_laps = pd.DataFrame({'LapNumber': range(1, max_lap_number + 1)})
+
+    # --- Prepare driver data ---
+    driver_dfs = []
     for driver in selected_drivers:
         driver_laps = session.laps.pick_drivers(driver).reset_index()
-        
-        if not driver_laps.empty:
-            # Format as F1 timing string (1:23.456)
-            driver_laps['LapTimeFormatted'] = driver_laps['LapTime'].apply(
-                lambda x: f"{int(x.total_seconds() // 60)}:{x.total_seconds() % 60:06.3f}" if pd.notna(x) else "N/A"
-            )
-            # Keep seconds for plotting position
-            driver_laps['LapTimeSeconds'] = driver_laps['LapTime'].dt.total_seconds()
-            
-            # Get driver color
-            style = fastf1.plotting.get_driver_style(
-                identifier=driver,
-                style=['color'],
-                session=session
-            )
-            
-            driver_laps['Driver'] = driver
-            driver_laps['Color'] = style['color']
-            data.append(driver_laps[['LapNumber', 'LapTimeSeconds', 'LapTimeFormatted', 'Driver', 'Color']])
-    
-    if not data:
-        st.warning("No lap data available for selected drivers")
-        return
-    
-    df = pd.concat(data, ignore_index=True)
-    
-    # Remove NaN lap times
-    df = df.dropna(subset=['LapTimeSeconds'])
-    
+        if driver_laps.empty:
+            continue
+
+        driver_laps = driver_laps[driver_laps['LapNumber'] > 0]  # remove negative laps
+
+        # Lap times
+        driver_laps['LapTimeSeconds'] = driver_laps['LapTime'].dt.total_seconds()
+        driver_laps['LapTimeFormatted'] = driver_laps['LapTimeSeconds'].apply(
+            lambda x: f"{int(x//60)}:{x%60:06.3f}" if pd.notna(x) else "N/A"
+        )
+
+        # Driver color
+        style = fastf1.plotting.get_driver_style(driver, style=['color'], session=session)
+        driver_laps['Driver'] = driver
+        driver_laps['Color'] = style['color']
+
+        # Merge with all laps to show all laps even if missing for this driver
+        df_full = all_laps.merge(
+            driver_laps[['LapNumber', 'LapTimeSeconds', 'LapTimeFormatted', 'Driver', 'Color']],
+            on='LapNumber',
+            how='left'
+        )
+        df_full['Driver'] = driver  # keep driver column consistent
+        driver_dfs.append(df_full)
+
+    df = pd.concat(driver_dfs, ignore_index=True)
+
     if df.empty:
-        st.warning("No valid lap times found")
+        st.warning("No valid lap data found")
         return
 
-    # Create a summary dataframe with all drivers per lap
-    df_pivot = df.pivot_table(
-        index='LapNumber', 
-        columns='Driver', 
-        values='LapTimeFormatted',
-        aggfunc='first'
-    ).reset_index()
-    
-    # Merge back to get a combined tooltip
-    df = df.merge(df_pivot, on='LapNumber', how='left')
-
-    # Selection based on x-coordinate (lap number)
+    # --- Hover selection ---
     hover = alt.selection_point(
         fields=['LapNumber'],
         nearest=True,
@@ -302,57 +647,55 @@ def lap_time(year, event, session_type):
         clear='mouseout'
     )
 
-    # Base line chart
+    # --- Base line chart ---
     lines = alt.Chart(df).mark_line(strokeWidth=2.5).encode(
-        x=alt.X('LapNumber:Q', 
-                title='Lap Number', 
-                axis=alt.Axis(tickMinStep=5)),
-        y=alt.Y('LapTimeSeconds:Q', 
-                title='Lap Time',
-                scale=alt.Scale(zero=False),
-                axis=alt.Axis(
-                    tickMinStep=2,
-                    tickCount=8,
-                    labelExpr="floor(datum.value / 60) + ':' + (datum.value % 60 < 10 ? '0' : '') + format(datum.value % 60, '.3f')"
-                )),
-        color=alt.Color('Driver:N', 
-                       scale=alt.Scale(
-                           domain=df['Driver'].unique().tolist(),
-                           range=df.groupby('Driver')['Color'].first().tolist()
-                       ),
-                       legend=alt.Legend(title='Driver', orient='right'))
+        x=alt.X(
+            'LapNumber:Q',
+            title='Lap Number',
+            scale=alt.Scale(domain=[1, max_lap_number]),
+            axis=alt.Axis(tickMinStep=1)
+        ),
+        y=alt.Y(
+            'LapTimeSeconds:Q',
+            title='Lap Time',
+            scale=alt.Scale(zero=False),
+            axis=alt.Axis(
+                labelExpr="floor(datum.value / 60) + ':' + (datum.value % 60 < 10 ? '0' : '') + format(datum.value % 60, '.3f')"
+            )
+        ),
+        color=alt.Color(
+            'Driver:N',
+            scale=alt.Scale(
+                domain=df['Driver'].dropna().unique().tolist(),
+                range=df.groupby('Driver')['Color'].first().tolist()
+            ),
+            legend=alt.Legend(title='Driver', orient='right')
+        )
     )
 
-    # Points that appear on hover
+    # --- Points on hover ---
     points = lines.mark_point(size=100, filled=True).encode(
         opacity=alt.condition(hover, alt.value(1), alt.value(0))
     )
 
-    # Vertical rule
-    rule = alt.Chart(df).mark_rule(color='gray', strokeWidth=1.5, strokeDash=[5, 5]).encode(
+    # --- Vertical rule ---
+    rule = alt.Chart(df).mark_rule(color='gray', strokeWidth=1.5, strokeDash=[5,5]).encode(
         x='LapNumber:Q'
-    ).transform_filter(
-        hover
-    )
+    ).transform_filter(hover)
 
-    # Build tooltip fields dynamically for all drivers
+    # --- Transparent selectors for tooltip ---
     tooltip_fields = [alt.Tooltip('LapNumber:Q', title='Lap')]
     for driver in selected_drivers:
-        if driver in df.columns:
-            tooltip_fields.append(alt.Tooltip(f'{driver}:N', title=driver))
+        tooltip_fields.append(alt.Tooltip('LapTimeFormatted:N', title=driver))
 
-    # Transparent selectors for better hover detection with combined tooltip
     selectors = alt.Chart(df).mark_point(size=200, opacity=0).encode(
         x='LapNumber:Q',
         y='LapTimeSeconds:Q',
         tooltip=tooltip_fields
     ).add_params(hover)
 
-    # Combine layers
-    chart = alt.layer(
-        lines, points, rule, selectors
-    ).properties(
-        width='container',
+    # --- Combine layers ---
+    chart = alt.layer(lines, points, rule, selectors).properties(
         height=450,
         title={
             "text": "Lap Time Progression",
@@ -369,155 +712,160 @@ def lap_time(year, event, session_type):
         titleFontSize=12
     ).interactive()
 
-    st.container()
+    # --- Display in Streamlit ---
     st.altair_chart(chart, use_container_width=True, theme="streamlit")
 
 def telemetry_driver_comparison(year, event, session_type):
-    fastf1.plotting.setup_mpl(color_scheme='fastf1')
-
     session = load_session(year, event, session_type)
 
     drivers = [session.get_driver(drv)["Abbreviation"] for drv in session.drivers]
     laps = session.laps
 
+    # --- Driver selection in columns ---
     col1, col2 = st.columns(2)
     with col1:
         driver_1 = st.selectbox("Driver 1:", drivers, index=0, key="driver_1")
     with col2:
         driver_2 = st.selectbox("Driver 2:", drivers, index=1, key="driver_2")
 
+    selected_drivers = [driver_1, driver_2]
+
+    # --- Default to fastest lap of driver 1 ---
     fastest_lap = laps.pick_drivers(driver_1).pick_fastest()
     lap_numbers = [int(lap) for lap in laps['LapNumber'].unique()]
     fastest_index = lap_numbers.index(int(fastest_lap['LapNumber']))
-
-    selected_lap = st.selectbox("Select lap to compare: (Default - Fastest lap of Driver 1)", options=lap_numbers, index=fastest_index)
+    selected_lap = int(st.selectbox("Select lap:", lap_numbers, index=fastest_index))
     st.markdown(f"### Comparing {driver_1} vs {driver_2} in lap {selected_lap}")
 
-    lap_1 = session.laps.pick_drivers(driver_1).pick_laps(selected_lap)
-    lap_2 = session.laps.pick_drivers(driver_2).pick_laps(selected_lap)
+    # --- Driver 1 & Driver 2 overview ---
+    lap_1 = laps.pick_drivers(driver_1)
+    lap_1 = lap_1[lap_1['LapNumber'].astype(int) == selected_lap].reset_index(drop=True)
+    lap_2 = laps.pick_drivers(driver_2)
+    lap_2 = lap_2[lap_2['LapNumber'].astype(int) == selected_lap].reset_index(drop=True)
 
     if lap_1.empty or lap_2.empty:
         st.warning(f"Telemetry not available for lap {selected_lap} for one or both drivers")
         return
 
-    tel_1 = lap_1.get_telemetry()
-    tel_2 = lap_2.get_telemetry()
-
     stint_1 = int(lap_1['Stint'].iloc[0])
-    stint_2 = int(lap_2['Stint'].iloc[0])
     tyre_1 = lap_1['Compound'].iloc[0]
+
+    stint_2 = int(lap_2['Stint'].iloc[0])
     tyre_2 = lap_2['Compound'].iloc[0]
-    tyre_age_1 = int(lap_1["TyreLife"].iloc[0])
-    tyre_age_2 = int(lap_2["TyreLife"].iloc[0])
 
     st.markdown(f"#### {driver_1} Overview")
-    st.markdown(f"**🥇 Tyre Compound:** {tyre_1}  |  **🏁 Stint:** {stint_1}  |  **⏳ Tyre Age:** {tyre_age_1} laps")
+    st.markdown(f"**🥇 Tyre Compound:** {tyre_1}  |  **🏁 Stint:** {stint_1}")
     st.markdown(f"#### {driver_2} Overview")
-    st.markdown(f"**🥈 Tyre Compound:** {tyre_2}  |  **🏁 Stint:** {stint_2}  |  **⏳ Tyre Age:** {tyre_age_2} laps")
+    st.markdown(f"**🥈 Tyre Compound:** {tyre_2}  |  **🏁 Stint:** {stint_2}")
     st.divider()
 
+    # --- Prepare telemetry data ---
+    dfs = []
+    for driver in selected_drivers:
+        driver_lap = laps.pick_drivers(driver)
+        driver_lap = driver_lap[driver_lap['LapNumber'].astype(int) == selected_lap]
+        tel = driver_lap.get_telemetry()
+        tel = tel[tel["Distance"] >= 0].copy()
+        tel["Driver"] = driver
+        tel["Color"] = fastf1.plotting.get_driver_style(driver, style=['color'], session=session)['color']
+        dfs.append(tel)
+
+    df = pd.concat(dfs, ignore_index=True)
+
+    # --- Function to create chart with zoom/pan and line tooltips ---
+    def create_chart(y_col, title, fmt=".1f"):
+        return alt.Chart(df).mark_line(strokeWidth=2.5).encode(
+            x=alt.X("Distance:Q", title="Distance (m)"),
+            y=alt.Y(f"{y_col}:Q", title=title),
+            color=alt.Color(
+                "Driver:N",
+                scale=alt.Scale(
+                    domain=df['Driver'].unique().tolist(),
+                    range=df.groupby('Driver')['Color'].first().tolist()
+                ),
+                legend=alt.Legend(title='Driver')
+            ),
+            tooltip=[alt.Tooltip("Driver:N"), alt.Tooltip("Distance:Q", format=".2f"), alt.Tooltip(f"{y_col}:Q", format=fmt)]
+        ).interactive()  # zoom/pan enabled
+
+    # --- Create charts ---
+    speed_chart = create_chart("Speed", "Speed (km/h)")
+    brake_chart = create_chart("Brake", "Brake")
+    throttle_chart = create_chart("Throttle", "Throttle (%)")
+
+    # --- Combine charts vertically with shared color scale ---
+    final_chart = alt.vconcat(
+        speed_chart,
+        brake_chart,
+        throttle_chart
+    ).resolve_scale(color="shared")
+
+    # --- Display in Streamlit ---
+    st.altair_chart(final_chart, use_container_width=True, theme="streamlit")
 
 
-    fig, (ax_speed, ax_brake, ax_throttle) = plt.subplots(3, 1, figsize=(12, 15), sharex=True)
+
+def tyre_degradation(year, event, session_type):
     
-    # Speed plot
-    ax_speed.plot(tel_1['Distance'], tel_1['Speed'], label=driver_1, color='red')
-    ax_speed.plot(tel_2['Distance'], tel_2['Speed'], label=driver_2, color='blue')
-    ax_speed.set_ylabel("Speed (km/h)")
-    ax_speed.set_title(f"Speed Comparison: Lap {selected_lap}")
-    ax_speed.grid(True, alpha=0.3)
-
-    # Brake plot
-    ax_brake.plot(tel_1['Distance'], tel_1['Brake'], label=driver_1, color='red')
-    ax_brake.plot(tel_2['Distance'], tel_2['Brake'], label=driver_2, color='blue')
-    ax_brake.set_ylabel("Brake")
-    ax_brake.set_title(f"Brake Comparison: Lap {selected_lap}")
-    ax_brake.grid(True, alpha=0.3)
-
-    # Throttle plot
-    ax_throttle.plot(tel_1['Distance'], tel_1['Throttle'], label=driver_1, color='red')
-    ax_throttle.plot(tel_2['Distance'], tel_2['Throttle'], label=driver_2, color='blue')
-    ax_throttle.set_ylabel("Throttle")
-    ax_throttle.set_title(f"Throttle Comparison: Lap {selected_lap}")
-    ax_throttle.set_xlabel("Distance (m)")
-    ax_throttle.grid(True, alpha=0.3)
-
-    # Single shared legend on top or bottom
-    handles, labels = ax_speed.get_legend_handles_labels()
-    fig.legend(handles, labels, loc='upper center', ncol=2, bbox_to_anchor=(0.5, 0.95))
-
-    plt.tight_layout(rect=[0, 0, 1, 0.93])  # leave space for legend
-    st.pyplot(fig)
-    plt.close(fig)
-
-def tyre_degradation(year , event , session_type):
-    fastf1.plotting.setup_mpl(color_scheme='fastf1')
-
     session = load_session(year, event, session_type)
-
     drivers = [session.get_driver(drv)["Abbreviation"] for drv in session.drivers]
     laps = session.laps
+
     # --- Select driver ---
-    selected_driver =  st.selectbox("Select driver: ",
-                      drivers , 
-                      index = 0)
-    
+    selected_driver = st.selectbox("Select driver: ", drivers, index=0)
     driver_laps = laps.pick_drivers(selected_driver)
-    stint_numbers = (driver_laps['Stint'].unique()).astype(int)
-    selected_stint = st.selectbox(f"Select Stint for driver {selected_driver}",
-                                stint_numbers,
-                                 index = 0)
-    
+    stint_numbers = driver_laps['Stint'].unique().astype(int)
+    selected_stint = st.selectbox(f"Select Stint for driver {selected_driver}", stint_numbers, index=0)
     stint_lap = driver_laps[driver_laps['Stint'] == selected_stint]
 
-    # --- Get min and max lap number of a stint
-    
+    # --- Stint info ---
     min_lap_num = int(stint_lap['LapNumber'].min())
     max_lap_num = int(stint_lap['LapNumber'].max())
-
-    compound = stint_lap['Compound'].iloc[0] 
+    compound = stint_lap['Compound'].iloc[0]
     st.markdown(f"**🛞 Tyre Compound:** {compound}  |  **Stint Start Lap:** {min_lap_num}  |  **Stint End Lap:** {max_lap_num}")
 
-    # --- Get telemetry data of the laps ---
-    min_lap = driver_laps[driver_laps['LapNumber'] == min_lap_num].iloc[0]
-    max_lap = driver_laps[driver_laps['LapNumber'] == max_lap_num].iloc[0]
-
+    # --- Get telemetry for first and last lap of stint ---
+    min_lap = stint_lap[stint_lap['LapNumber'] == min_lap_num].iloc[0]
+    max_lap = stint_lap[stint_lap['LapNumber'] == max_lap_num].iloc[0]
     tel_min = min_lap.get_telemetry()
     tel_max = max_lap.get_telemetry()
-    
-    # --- Tyre degradation analysis plots ---
+    tel_min["Lap"] = f"Lap {min_lap_num}"
+    tel_max["Lap"] = f"Lap {max_lap_num}"
 
-    fig, (ax_speed, ax_brake, ax_throttle) = plt.subplots(3, 1, figsize=(12, 15), sharex=True)
-    
-    # Speed plot
-    ax_speed.plot(tel_min['Distance'], tel_min['Speed'], label= "Stint Start Lap", color='red')
-    ax_speed.plot(tel_max['Distance'], tel_max['Speed'], label="Stint End Lap" , color='blue')
-    ax_speed.set_ylabel("Speed (km/h)")
-    ax_speed.set_title(f"Speed Comparison: Stint {selected_stint}")
-    ax_speed.grid(True, alpha=0.3)
+    df = pd.concat([tel_min, tel_max], ignore_index=True)
+    df = df[df["Distance"] >= 0].copy()  # remove negative distances
 
-    # Brake plot
-    ax_brake.plot(tel_min['Distance'], tel_min['Brake'],label= "Min Lap" , color='red')
-    ax_brake.plot(tel_max['Distance'], tel_max['Brake'], label="Max Lap", color='blue')
-    ax_brake.set_ylabel("Brake")
-    ax_brake.set_title(f"Brake Comparison: Stint {selected_stint}")
-    ax_brake.grid(True, alpha=0.3)
+    # --- Base chart ---
+    base = alt.Chart(df).encode(x=alt.X("Distance:Q", title="Distance (m)"))
 
-    # Throttle plot
-    ax_throttle.plot(tel_min['Distance'], tel_min['Throttle'], label= "Min Lap" , color='red')
-    ax_throttle.plot(tel_max['Distance'], tel_max['Throttle'], label="Max Lap", color='blue')
-    ax_throttle.set_ylabel("Throttle")
-    ax_throttle.set_title(f"Throttle Comparison: Stint {selected_stint}")
-    ax_throttle.set_xlabel("Distance (m)")
-    ax_throttle.grid(True, alpha=0.3)
+    # --- Function to create individual chart ---
+    def create_chart(y_col, title, fmt=".1f"):
+        return base.mark_line(opacity=0.7, strokeWidth=2.5).encode(
+            y=alt.Y(f"{y_col}:Q", title=title),
+            color=alt.Color(
+                "Lap:N",
+                scale=alt.Scale(range=["red", "blue"]),
+                legend=alt.Legend(title='Lap')
+            ),
+            tooltip=[
+                alt.Tooltip("Lap:N"),
+                alt.Tooltip("Distance:Q", format=".2f"),
+                alt.Tooltip(f"{y_col}:Q", format=fmt)
+            ]
+        ).interactive().properties(height=200, title=title)
 
-    # Single shared legend on top or bottom
-    handles, labels = ax_speed.get_legend_handles_labels()
-    fig.legend(handles, labels, loc='upper center', ncol=2, bbox_to_anchor=(0.5, 0.95))
+    speed_chart = create_chart("Speed", f"Speed Comparison: Stint {selected_stint}")
+    brake_chart = create_chart("Brake", f"Brake Comparison: Stint {selected_stint}")
+    throttle_chart = create_chart("Throttle", f"Throttle Comparison: Stint {selected_stint}")
 
-    plt.tight_layout(rect=[0, 0, 1, 0.93])  # leave space for legend
-    st.pyplot(fig)
-    plt.close(fig)
+    # --- Combine charts vertically ---
+    final_chart = alt.vconcat(
+        speed_chart,
+        brake_chart,
+        throttle_chart
+    ).resolve_scale(color="shared")
+
+    st.altair_chart(final_chart, use_container_width=True)
 
 
 

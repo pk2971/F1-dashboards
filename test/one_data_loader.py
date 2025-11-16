@@ -1,6 +1,8 @@
 import fastf1
 import streamlit as st
 from fastf1.ergast import Ergast
+# from streamlit_autorefresh import st_autorefresh
+
 
 @st.cache_data(ttl = 3600 , max_entries = 5 , show_spinner=True)
 
