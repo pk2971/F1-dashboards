@@ -1,6 +1,6 @@
 # 🏎️ Interactive Formula 1 Race Analytics Dashboard  
 
-**Live Demo:** [Streamlit Dashboard]([https://dashboardspy-m2wnomn2jj7cr5qmahrpkd.streamlit.app/])
+**Live Demo:** [Streamlit Dashboard](https://dashboardspy-m2wnomn2jj7cr5qmahrpkd.streamlit.app/)
 
 **Medium Article:**  
 A detailed article is in progress where I will discuss each dashboard module in depth, including the design choices, interactivity, and insights derived from the data. *Coming soon…*
