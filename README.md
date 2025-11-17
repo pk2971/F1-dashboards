@@ -1,6 +1,6 @@
 # 🏎️ Interactive Formula 1 Race Analytics Dashboard  
 
-**Live Demo:** [Streamlit Dashboard](https://f1-dashboards-bc3ecpp8ahwayw6bw33fpf.streamlit.app/)  
+**Live Demo:** [Streamlit Dashboard]([https://f1-dashboards-bc3ecpp8ahwayw6bw33fpf.streamlit.app/](https://dashboardspy-m2wnomn2jj7cr5qmahrpkd.streamlit.app/))  
 
 **Medium Article:**  
 A detailed article is in progress where I will discuss each dashboard module in depth, including the design choices, interactivity, and insights derived from the data. *Coming soon…*
@@ -44,15 +44,12 @@ All race session data is sourced from the **[FastF1 API](https://theoehrly.githu
 
 ## Project Structure
 All source code is in the `source/` directory:
-
-source/
-
+```
+src/
 ├─ Dashboard.py # Main Streamlit app
-
 ├─ data_loader.py # FastF1 session loader with caching
-
 └─ plot_functions.py # Functions for Race Positions, Tyre Strategies, and Lap Time plots
-
+```
 
 ---
 
@@ -62,7 +59,6 @@ source/
 ```bash
 git clone https://github.com/pk2971/F1-dashboards.git
 cd src
-pip install requirements.txt
 ```
 2. Install dependecies
 ` pip install requirements.txt`
