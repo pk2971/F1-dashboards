@@ -65,3 +65,9 @@ cd src
 3. Start the Streamlit dashboard:
 `streamlit run Dashboard.py`
 
+---
+
+## Bugs and other feature development
+
+- 
+
