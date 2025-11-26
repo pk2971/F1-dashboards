@@ -15,22 +15,45 @@ All race session data is sourced from the **[FastF1 API](https://theoehrly.githu
 
 ## Features
 
-### 1. Race Position Tracker
+### 1. Race Overview:
+- Summarizes race results including P1–P3 finishers, pole position, and fastest lap details.
+- Provides a quick snapshot of overall race performance.
+
+### 2. Race Position Tracker
 - Visualizes **driver position changes lap-by-lap**.  
 - Overlays highlight **Safety Cars, Red Flags, and Virtual Safety Car (VSC) periods**.  
 - Select specific laps and drivers for custom race views.  
 
-### 2. Tyre Strategy Analyzer
+### 3. Tyre Strategy Analyzer
 - Displays **stint lengths and tyre compounds** per driver.  
 - Integrates **rainfall overlays** for weather-sensitive strategy analysis.  
 - Provides insights into **pit stops, tyre management, and strategy choices**.  
 
-### 3. Lap Time Comparison
+### 4. Lap Time Comparison
 - Charts **lap-time progression** for selected drivers.  
 - Highlights **performance consistency** and race pace dynamics.  
-- Filters for **quick laps** to focus on optimal driver performance.  
+- Filters for **quick laps** to focus on optimal driver performance.
+
+### 5. Telemetry Comparison
+- Compare throttle, brake, and speed data for two selected drivers on a chosen lap.
+- Visualizes driving differences side by side.
+
+### 6. Tyre Degradation
+- Tracks speed, brake, and throttle against distance for a selected driver and stint.
+- Highlights performance drop and tire wear trends.
+  
 
 ---
+
+## Tech Stack
+
+- **Languages:** Python 3.10+  
+- **Frameworks/Libraries:** Streamlit, FastF1, Pandas, Matplotlib, NumPy  
+- **Tools:** VSCode, Git, Streamlit cloud  
+- **Other:** caching with `st.cache_data`, modular plotting functions
+
+---
+
 
 ## Technical Highlights
 - **Interactive filters:** Select drivers, laps, and session types dynamically.  
@@ -41,6 +64,8 @@ All race session data is sourced from the **[FastF1 API](https://theoehrly.githu
 - Developed in **VSCode**, hosted on **Streamlit**.  
 
 ---
+
+
 
 ## Project Structure
 All source code is in the `source/` directory:
@@ -64,3 +89,25 @@ cd src
 ` pip install requirements.txt`
 3. Start the Streamlit dashboard:
 `streamlit run Dashboard.py`
+
+---
+
+## Known Issues / Bugs
+
+- See [GitHub Issues](https://github.com/pk2971/F1-dashboards/issues).  
+
+If you encounter other issues, feel free to raise them in the repository!
+
+---
+
+## Contributing
+
+Contributions are welcome! Fork the repository, make your changes, and submit a pull request.  
+
+---
+
+## License & Credits
+
+- Built with ❤️ using **Python**, **FastF1**, and **Streamlit**  
+- Data provided by the **FastF1 API**  
+
