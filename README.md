@@ -3,7 +3,8 @@
 **Live Demo:** [Streamlit Dashboard](https://dashboardspy-m2wnomn2jj7cr5qmahrpkd.streamlit.app/) (Dashboard might be in sleep mode, pls run it locally or lmk if you want me to 'wake it up')
 
 **Medium Article:**  
-A detailed article is in progress where I will discuss each dashboard module in depth, including the design choices, interactivity, and insights derived from the data. *Coming soon…*
+Here I discuss each dashboard module in depth, including the design choices, interactivity, and insights derived from the data.
+- [Link to the article](https://medium.com/@kspraharshita.11/building-a-multi-page-interactive-formula-one-analytics-dashboard-using-python-fastf1-and-16c8a0ca5f30)
 
 ---
 
